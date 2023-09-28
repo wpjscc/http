@@ -167,10 +167,6 @@ use React\Socket\ServerInterface;
  * have full control over consuming the incoming HTTP request body and
  * concurrency settings. See also [streaming incoming request](#streaming-incoming-request)
  * below for more details.
- *
- * > Changelog v1.5.0: This class has been renamed to `HttpServer` from the
- *   previous `Server` class in order to avoid any ambiguities.
- *   The previous name has been deprecated and should not be used anymore.
  */
 final class HttpServer extends EventEmitter
 {

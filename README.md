@@ -740,8 +740,6 @@ See also the [Unix Domain Sockets (UDS) example](examples/14-client-unix-domain-
 
 ### HttpServer
 
-<a id="server"></a> <!-- legacy id -->
-
 The `React\Http\HttpServer` class is responsible for handling incoming connections and then
 processing each incoming HTTP request.
 
@@ -890,10 +888,6 @@ specifically designed to help with more advanced use cases where you want to
 have full control over consuming the incoming HTTP request body and
 concurrency settings. See also [streaming incoming request](#streaming-incoming-request)
 below for more details.
-
-> Changelog v1.5.0: This class has been renamed to `HttpServer` from the
-  previous `Server` class in order to avoid any ambiguities.
-  The previous name has been deprecated and should not be used anymore.
 
 ### listen()
 
