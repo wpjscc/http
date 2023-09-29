@@ -37,11 +37,7 @@ class Browser
      * This class takes two optional arguments for more advanced usage:
      *
      * ```php
-     * // constructor signature as of v1.5.0
      * $browser = new React\Http\Browser(?ConnectorInterface $connector = null, ?LoopInterface $loop = null);
-     *
-     * // legacy constructor signature before v1.5.0
-     * $browser = new React\Http\Browser(?LoopInterface $loop = null, ?ConnectorInterface $connector = null);
      * ```
      *
      * If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
@@ -69,23 +65,11 @@ class Browser
      * This value SHOULD NOT be given unless you're sure you want to explicitly use a
      * given event loop instance.
      *
-     * @param null|ConnectorInterface|LoopInterface $connector
-     * @param null|LoopInterface|ConnectorInterface $loop
-     * @throws \InvalidArgumentException for invalid arguments
+     * @param ?ConnectorInterface $connector
+     * @param ?LoopInterface $loop
      */
-    public function __construct($connector = null, $loop = null)
+    public function __construct(ConnectorInterface $connector = null, LoopInterface $loop = null)
     {
-        // swap arguments for legacy constructor signature
-        if (($connector instanceof LoopInterface || $connector === null) && ($loop instanceof ConnectorInterface || $loop === null)) {
-            $swap = $loop;
-            $loop = $connector;
-            $connector = $swap;
-        }
-
-        if (($connector !== null && !$connector instanceof ConnectorInterface) || ($loop !== null && !$loop instanceof LoopInterface)) {
-            throw new \InvalidArgumentException('Expected "?ConnectorInterface $connector" and "?LoopInterface $loop" arguments');
-        }
-
         $loop = $loop ?: Loop::get();
         $this->transaction = new Transaction(
             Sender::createFromLoop($loop, $connector),
