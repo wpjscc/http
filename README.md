@@ -1863,11 +1863,7 @@ $browser = new React\Http\Browser();
 This class takes two optional arguments for more advanced usage:
 
 ```php
-// constructor signature as of v1.5.0
 $browser = new React\Http\Browser(?ConnectorInterface $connector = null, ?LoopInterface $loop = null);
-
-// legacy constructor signature before v1.5.0
-$browser = new React\Http\Browser(?LoopInterface $loop = null, ?ConnectorInterface $connector = null);
 ```
 
 If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
