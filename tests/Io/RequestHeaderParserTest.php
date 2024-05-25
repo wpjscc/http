@@ -776,10 +776,6 @@ class RequestHeaderParserTest extends TestCase
 
     public function testServerParamsWontBeSetOnMissingUrls()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $request = null;
 
         $clock = $this->getMockBuilder('React\Http\Io\Clock')->disableOriginalConstructor()->getMock();

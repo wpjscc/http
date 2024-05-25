@@ -130,11 +130,6 @@ class UriTest extends TestCase
      */
     public function testToStringReturnsOriginalUriGivenToCtor($string)
     {
-        if (PHP_VERSION_ID < 50519 || (PHP_VERSION_ID < 50603 && PHP_VERSION_ID >= 50606)) {
-            // @link https://3v4l.org/HdoPG
-            $this->markTestSkipped('Empty password not supported on legacy PHP');
-        }
-
         $uri = new Uri($string);
 
         $this->assertEquals($string, (string) $uri);

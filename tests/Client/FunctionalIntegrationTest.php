@@ -134,9 +134,6 @@ class FunctionalIntegrationTest extends TestCase
     /** @group internet */
     public function testSuccessfulResponseEmitsEnd()
     {
-        // max_nesting_level was set to 100 for PHP Versions < 5.4 which resulted in failing test for legacy PHP
-        ini_set('xdebug.max_nesting_level', 256);
-
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
 
         $request = $client->request(new Request('GET', 'http://www.google.com/', array(), '', '1.0'));
@@ -155,9 +152,6 @@ class FunctionalIntegrationTest extends TestCase
     /** @group internet */
     public function testCancelPendingConnectionEmitsClose()
     {
-        // max_nesting_level was set to 100 for PHP Versions < 5.4 which resulted in failing test for legacy PHP
-        ini_set('xdebug.max_nesting_level', 256);
-
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
 
         $request = $client->request(new Request('GET', 'http://www.google.com/', array(), '', '1.0'));

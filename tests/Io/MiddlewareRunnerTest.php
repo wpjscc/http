@@ -76,9 +76,6 @@ final class MiddlewareRunnerTest extends TestCase
         $middleware($request);
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testThrowsIfHandlerThrowsThrowable()
     {
         $middleware = new MiddlewareRunner(array(

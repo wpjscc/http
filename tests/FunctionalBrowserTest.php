@@ -389,10 +389,6 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testCanAccessHttps()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         \React\Async\await($this->browser->get('https://www.google.com/'));
     }
 
@@ -401,10 +397,6 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testVerifyPeerEnabledForBadSslRejects()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $connector = new Connector(array(
             'tls' => array(
                 'verify_peer' => true
@@ -423,10 +415,6 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testVerifyPeerDisabledForBadSslResolves()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $connector = new Connector(array(
             'tls' => array(
                 'verify_peer' => false

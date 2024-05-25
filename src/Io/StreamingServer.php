@@ -346,8 +346,7 @@ final class StreamingServer extends EventEmitter
             }
         }
 
-        /** @var array $m legacy PHP 5.3 only */
-        if ($code < 100 || $code > 999 || \substr_count($headers, "\n") !== ($expected + 1) || (\PHP_VERSION_ID >= 50400 ? \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers) : \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers, $m)) !== $expected) {
+        if ($code < 100 || $code > 999 || \substr_count($headers, "\n") !== ($expected + 1) || \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers) !== $expected) {
             $this->emit('error', array(new \InvalidArgumentException('Unable to send response with invalid response headers')));
             $this->writeError($connection, Response::STATUS_INTERNAL_SERVER_ERROR, $request);
             return;

@@ -97,9 +97,6 @@ class ResponseTest extends TestCase
         $this->assertEquals('<!doctype html><body>Hello wörld!</body>', (string) $response->getBody());
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testJsonMethodReturnsPrettyPrintedJsonResponse()
     {
         $response = Response::json(array('text' => 'Hello wörld!'));
@@ -109,9 +106,6 @@ class ResponseTest extends TestCase
         $this->assertEquals("{\n    \"text\": \"Hello wörld!\"\n}\n", (string) $response->getBody());
     }
 
-    /**
-     * @requires PHP 5.6.6
-     */
     public function testJsonMethodReturnsZeroFractionsInJsonResponse()
     {
         $response = Response::json(1.0);
@@ -132,11 +126,7 @@ class ResponseTest extends TestCase
 
     public function testJsonMethodThrowsForInvalidString()
     {
-        if (PHP_VERSION_ID < 50500) {
-            $this->setExpectedException('InvalidArgumentException', 'Unable to encode given data as JSON');
-        } else {
-            $this->setExpectedException('InvalidArgumentException', 'Unable to encode given data as JSON: Malformed UTF-8 characters, possibly incorrectly encoded');
-        }
+        $this->setExpectedException('InvalidArgumentException', 'Unable to encode given data as JSON: Malformed UTF-8 characters, possibly incorrectly encoded');
         Response::json("Hello w\xF6rld!");
     }
 

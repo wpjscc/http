@@ -151,8 +151,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
             (\defined('JSON_PRETTY_PRINT') ? \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE : 0) | (\defined('JSON_PRESERVE_ZERO_FRACTION') ? \JSON_PRESERVE_ZERO_FRACTION : 0)
         );
 
-        // throw on error, now `false` but used to be `(string) "null"` before PHP 5.5
-        if ($json === false || (\PHP_VERSION_ID < 50500 && \json_last_error() !== \JSON_ERROR_NONE)) {
+        if ($json === false) {
             throw new \InvalidArgumentException(
                 'Unable to encode given data as JSON' . (\function_exists('json_last_error_msg') ? ': ' . \json_last_error_msg() : ''),
                 \json_last_error()

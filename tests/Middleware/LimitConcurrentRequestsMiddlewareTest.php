@@ -120,9 +120,6 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         });
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testThrowsErrorDirectlyFromMiddlewareWhenBelowLimit()
     {
         $middleware = new LimitConcurrentRequestsMiddleware(1);

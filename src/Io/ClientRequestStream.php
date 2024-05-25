@@ -69,8 +69,7 @@ class ClientRequestStream extends EventEmitter implements WritableStreamInterfac
             }
         }
 
-        /** @var array $m legacy PHP 5.3 only */
-        if (!\preg_match('#^\S+ \S+ HTTP/1\.[01]\r\n#m', $headers) || \substr_count($headers, "\n") !== ($expected + 1) || (\PHP_VERSION_ID >= 50400 ? \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers) : \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers, $m)) !== $expected) {
+        if (!\preg_match('#^\S+ \S+ HTTP/1\.[01]\r\n#m', $headers) || \substr_count($headers, "\n") !== ($expected + 1) || \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers) !== $expected) {
             $this->closeError(new \InvalidArgumentException('Unable to send request with invalid request headers'));
             return;
         }

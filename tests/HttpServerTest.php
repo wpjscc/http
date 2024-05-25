@@ -87,9 +87,6 @@ final class HttpServerTest extends TestCase
         $this->assertSame(1, $called);
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testSimpleRequestCallsArrayRequestHandlerOnce()
     {
         $this->called = null;

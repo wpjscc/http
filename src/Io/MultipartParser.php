@@ -36,7 +36,7 @@ final class MultipartParser
     /**
      * ini setting "max_input_vars"
      *
-     * Does not exist in PHP < 5.3.9 or HHVM, so assume PHP's default 1000 here.
+     * Assume PHP' default of 1000 here.
      *
      * @var int
      * @link http://php.net/manual/en/info.configuration.php#ini.max-input-vars
@@ -46,7 +46,7 @@ final class MultipartParser
     /**
      * ini setting "max_input_nesting_level"
      *
-     * Does not exist in HHVM, but assumes hard coded to 64 (PHP's default).
+     * Assume PHP's default of 64 here.
      *
      * @var int
      * @link http://php.net/manual/en/info.configuration.php#ini.max-input-nesting-level
@@ -81,14 +81,8 @@ final class MultipartParser
      */
     public function __construct($uploadMaxFilesize = null, $maxFileUploads = null)
     {
-        $var = \ini_get('max_input_vars');
-        if ($var !== false) {
-            $this->maxInputVars = (int)$var;
-        }
-        $var = \ini_get('max_input_nesting_level');
-        if ($var !== false) {
-            $this->maxInputNestingLevel = (int)$var;
-        }
+        $this->maxInputVars = (int) \ini_get('max_input_vars');
+        $this->maxInputNestingLevel = (int) \ini_get('max_input_nesting_level');
 
         if ($uploadMaxFilesize === null) {
             $uploadMaxFilesize = \ini_get('upload_max_filesize');

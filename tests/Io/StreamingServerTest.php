@@ -82,9 +82,6 @@ class StreamingServerTest extends TestCase
         $this->connection->emit('data', array($data));
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testRequestEventIsEmittedForArrayCallable()
     {
         $this->called = null;
@@ -2845,9 +2842,6 @@ class StreamingServerTest extends TestCase
         $this->assertEquals('hello', $exception->getPrevious()->getMessage());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testResponseThrowableThrowInCallBackFunctionWillResultInErrorMessage()
     {
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {

@@ -277,9 +277,6 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $this->assertNull($exception->getPrevious());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testBufferingRejectsWhenNextHandlerThrowsErrorWhenStreamEnds()
     {
         $stream = new ThroughStream();

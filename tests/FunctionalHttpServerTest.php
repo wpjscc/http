@@ -122,10 +122,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsOnRandomPort()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $connector = new Connector(array(
             'tls' => array('verify_peer' => false)
         ));
@@ -155,10 +151,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsReturnsData()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $http = new HttpServer(function (RequestInterface $request) {
             return new Response(
                 200,
@@ -193,10 +185,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsOnRandomPortWithoutHostHeaderUsesSocketUri()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $connector = new Connector(array(
             'tls' => array('verify_peer' => false)
         ));
@@ -284,10 +272,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsOnStandardPortReturnsUriWithNoPort()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         try {
             $socket = new SocketServer('tls://127.0.0.1:443', array('tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
@@ -322,10 +306,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsOnStandardPortWithoutHostHeaderUsesSocketUri()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         try {
             $socket = new SocketServer('tls://127.0.0.1:443', array('tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
@@ -389,10 +369,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsOnHttpStandardPortReturnsUriWithPort()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         try {
             $socket = new SocketServer('tls://127.0.0.1:80', array('tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
@@ -726,10 +702,6 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testLimitConcurrentRequestsMiddlewareRequestStreamPausing()
     {
-        if (defined('HHVM_VERSION') && !interface_exists('React\Promise\PromisorInterface')) {
-            $this->markTestSkipped('Not supported on legacy HHVM with Promise v3');
-        }
-
         $connector = new Connector();
 
         $http = new HttpServer(

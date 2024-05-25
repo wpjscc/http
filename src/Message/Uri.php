@@ -45,16 +45,7 @@ final class Uri implements UriInterface
      */
     public function __construct($uri)
     {
-        // @codeCoverageIgnoreStart
-        if (\PHP_VERSION_ID < 50407 && \strpos($uri, '//') === 0) {
-            // @link https://3v4l.org/UrAQP
-            $parts = \parse_url('http:' . $uri);
-            unset($parts['schema']);
-        } else {
-            $parts = \parse_url($uri);
-        }
-        // @codeCoverageIgnoreEnd
-
+        $parts = \parse_url($uri);
         if ($parts === false || (isset($parts['scheme']) && !\preg_match('#^[a-z]+$#i', $parts['scheme'])) || (isset($parts['host']) && \preg_match('#[\s_%+]#', $parts['host']))) {
             throw new \InvalidArgumentException('Invalid URI given');
         }
