@@ -12,10 +12,10 @@ require __DIR__ . '/../vendor/autoload.php';
 $proxy = new Clue\React\SshProxy\SshSocksConnector(getenv('ssh_proxy') ?: 'alice@localhost');
 
 // create a Browser object that uses the SSH proxy client for connections
-$connector = new Connector(array(
+$connector = new Connector([
     'tcp' => $proxy,
     'dns' => false
-));
+]);
 
 $browser = new Browser($connector);
 

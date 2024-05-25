@@ -13,6 +13,8 @@ use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use React\Stream\ReadableStreamInterface;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 /**
  * @internal
@@ -77,21 +79,20 @@ class Transaction
         });
 
         // use timeout from options or default to PHP's default_socket_timeout (60)
-        $timeout = (float)($this->timeout !== null ? $this->timeout : ini_get("default_socket_timeout"));
+        $timeout = (float) ($this->timeout ?? ini_get("default_socket_timeout"));
 
-        $loop = $this->loop;
         $this->next($request, $deferred, $state)->then(
-            function (ResponseInterface $response) use ($state, $deferred, $loop, &$timeout) {
+            function (ResponseInterface $response) use ($state, $deferred, &$timeout) {
                 if ($state->timeout !== null) {
-                    $loop->cancelTimer($state->timeout);
+                    $this->loop->cancelTimer($state->timeout);
                     $state->timeout = null;
                 }
                 $timeout = -1;
                 $deferred->resolve($response);
             },
-            function ($e) use ($state, $deferred, $loop, &$timeout) {
+            function ($e) use ($state, $deferred, &$timeout) {
                 if ($state->timeout !== null) {
-                    $loop->cancelTimer($state->timeout);
+                    $this->loop->cancelTimer($state->timeout);
                     $state->timeout = null;
                 }
                 $timeout = -1;
@@ -105,10 +106,9 @@ class Transaction
 
         $body = $request->getBody();
         if ($body instanceof ReadableStreamInterface && $body->isReadable()) {
-            $that = $this;
-            $body->on('close', function () use ($that, $deferred, $state, &$timeout) {
+            $body->on('close', function () use ($deferred, $state, &$timeout) {
                 if ($timeout >= 0) {
-                    $that->applyTimeout($deferred, $state, $timeout);
+                    $this->applyTimeout($deferred, $state, $timeout);
                 }
             });
         } else {
@@ -138,24 +138,23 @@ class Transaction
 
     private function next(RequestInterface $request, Deferred $deferred, ClientRequestState $state)
     {
-        $this->progress('request', array($request));
+        $this->progress('request', [$request]);
 
-        $that = $this;
         ++$state->numRequests;
 
         $promise = $this->sender->send($request);
 
         if (!$this->streaming) {
-            $promise = $promise->then(function ($response) use ($deferred, $state, $that) {
-                return $that->bufferResponse($response, $deferred, $state);
+            $promise = $promise->then(function ($response) use ($deferred, $state) {
+                return $this->bufferResponse($response, $deferred, $state);
             });
         }
 
         $state->pending = $promise;
 
         return $promise->then(
-            function (ResponseInterface $response) use ($request, $that, $deferred, $state) {
-                return $that->onResponse($response, $request, $deferred, $state);
+            function (ResponseInterface $response) use ($request, $deferred, $state) {
+                return $this->onResponse($response, $request, $deferred, $state);
             }
         );
     }
@@ -171,7 +170,7 @@ class Transaction
 
         if ($size !== null && $size > $this->maximumSize) {
             $body->close();
-            return \React\Promise\reject(new \OverflowException(
+            return reject(new \OverflowException(
                 'Response body size of ' . $size . ' bytes exceeds maximum of ' . $this->maximumSize . ' bytes',
                 \defined('SOCKET_EMSGSIZE') ? \SOCKET_EMSGSIZE : 90
             ));
@@ -179,33 +178,32 @@ class Transaction
 
         // body is not streaming => already buffered
         if (!$body instanceof ReadableStreamInterface) {
-            return \React\Promise\resolve($response);
+            return resolve($response);
         }
 
         /** @var ?\Closure $closer */
         $closer = null;
-        $maximumSize = $this->maximumSize;
 
-        return $state->pending = new Promise(function ($resolve, $reject) use ($body, $maximumSize, $response, &$closer) {
+        return $state->pending = new Promise(function ($resolve, $reject) use ($body, $response, &$closer) {
             // resolve with current buffer when stream closes successfully
             $buffer = '';
-            $body->on('close', $closer = function () use (&$buffer, $response, $maximumSize, $resolve, $reject) {
+            $body->on('close', $closer = function () use (&$buffer, $response, $resolve, $reject) {
                 $resolve($response->withBody(new BufferedBody($buffer)));
             });
 
             // buffer response body data in memory
-            $body->on('data', function ($data) use (&$buffer, $maximumSize, $body, $closer, $reject) {
+            $body->on('data', function ($data) use (&$buffer, $body, $closer, $reject) {
                 $buffer .= $data;
 
                 // close stream and reject promise if limit is exceeded
-                if (isset($buffer[$maximumSize])) {
+                if (isset($buffer[$this->maximumSize])) {
                     $buffer = '';
                     assert($closer instanceof \Closure);
                     $body->removeListener('close', $closer);
                     $body->close();
 
                     $reject(new \OverflowException(
-                        'Response body size exceeds maximum of ' . $maximumSize . ' bytes',
+                        'Response body size exceeds maximum of ' . $this->maximumSize . ' bytes',
                         \defined('SOCKET_EMSGSIZE') ? \SOCKET_EMSGSIZE : 90
                     ));
                 }
@@ -236,7 +234,7 @@ class Transaction
      */
     public function onResponse(ResponseInterface $response, RequestInterface $request, Deferred $deferred, ClientRequestState $state)
     {
-        $this->progress('response', array($response, $request));
+        $this->progress('response', [$response, $request]);
 
         // follow 3xx (Redirection) response status codes if Location header is present and not explicitly disabled
         // @link https://tools.ietf.org/html/rfc7231#section-6.4
@@ -267,7 +265,7 @@ class Transaction
         $location = Uri::resolve($request->getUri(), new Uri($response->getHeaderLine('Location')));
 
         $request = $this->makeRedirectRequest($request, $location, $response->getStatusCode());
-        $this->progress('redirect', array($request));
+        $this->progress('redirect', [$request]);
 
         if ($state->numRequests >= $this->maxRedirects) {
             throw new \RuntimeException('Maximum number of redirects (' . $this->maxRedirects . ') exceeded');
@@ -308,7 +306,7 @@ class Transaction
         return $request;
     }
 
-    private function progress($name, array $args = array())
+    private function progress($name, array $args = [])
     {
         return;
 

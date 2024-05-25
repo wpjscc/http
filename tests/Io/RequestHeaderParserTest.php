@@ -19,14 +19,14 @@ class RequestHeaderParserTest extends TestCase
 
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\n"));
-        $connection->emit('data', array("Host: example.com:80\r\n"));
-        $connection->emit('data', array("Connection: close\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\n"]);
+        $connection->emit('data', ["Host: example.com:80\r\n"]);
+        $connection->emit('data', ["Connection: close\r\n"]);
 
         $parser->removeAllListeners();
         $parser->on('headers', $this->expectCallableOnce());
 
-        $connection->emit('data', array("\r\n"));
+        $connection->emit('data', ["\r\n"]);
     }
 
     public function testFeedInOneGo()
@@ -40,7 +40,7 @@ class RequestHeaderParserTest extends TestCase
         $parser->handle($connection);
 
         $data = $this->createGetRequest();
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
     }
 
     public function testFeedTwoRequestsOnSeparateConnections()
@@ -60,8 +60,8 @@ class RequestHeaderParserTest extends TestCase
         $parser->handle($connection2);
 
         $data = $this->createGetRequest();
-        $connection1->emit('data', array($data));
-        $connection2->emit('data', array($data));
+        $connection1->emit('data', [$data]);
+        $connection2->emit('data', [$data]);
 
         $this->assertEquals(2, $called);
     }
@@ -83,13 +83,13 @@ class RequestHeaderParserTest extends TestCase
         $parser->handle($connection);
 
         $data = $this->createGetRequest();
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $request);
         $this->assertSame('GET', $request->getMethod());
         $this->assertEquals('http://example.com/', $request->getUri());
         $this->assertSame('1.1', $request->getProtocolVersion());
-        $this->assertSame(array('Host' => array('example.com'), 'Connection' => array('close')), $request->getHeaders());
+        $this->assertSame(['Host' => ['example.com'], 'Connection' => ['close']], $request->getHeaders());
 
         $this->assertSame($connection, $conn);
     }
@@ -101,10 +101,9 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
 
         $ended = false;
-        $that = $this;
-        $parser->on('headers', function (ServerRequestInterface $request) use (&$ended, $that) {
+        $parser->on('headers', function (ServerRequestInterface $request) use (&$ended) {
             $body = $request->getBody();
-            $that->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+            $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
 
             $body->on('end', function () use (&$ended) {
                 $ended = true;
@@ -115,7 +114,7 @@ class RequestHeaderParserTest extends TestCase
         $parser->handle($connection);
 
         $data = "GET / HTTP/1.0\r\n\r\n";
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertTrue($ended);
     }
@@ -127,10 +126,9 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
 
         $buffer = '';
-        $that = $this;
-        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer, $that) {
+        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer) {
             $body = $request->getBody();
-            $that->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+            $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
 
             $body->on('data', function ($chunk) use (&$buffer) {
                 $buffer .= $chunk;
@@ -145,7 +143,7 @@ class RequestHeaderParserTest extends TestCase
 
         $data = "POST / HTTP/1.0\r\nContent-Length: 11\r\n\r\n";
         $data .= 'RANDOM DATA';
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertSame('RANDOM DATA.', $buffer);
     }
@@ -157,10 +155,9 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
 
         $buffer = '';
-        $that = $this;
-        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer, $that) {
+        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer) {
             $body = $request->getBody();
-            $that->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+            $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
 
             $body->on('data', function ($chunk) use (&$buffer) {
                 $buffer .= $chunk;
@@ -173,7 +170,7 @@ class RequestHeaderParserTest extends TestCase
         $size = 10000;
         $data = "POST / HTTP/1.0\r\nContent-Length: $size\r\n\r\n";
         $data .= str_repeat('x', $size);
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertSame($size, strlen($buffer));
     }
@@ -185,10 +182,9 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
 
         $buffer = '';
-        $that = $this;
-        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer, $that) {
+        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer) {
             $body = $request->getBody();
-            $that->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+            $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
 
             $body->on('data', function ($chunk) use (&$buffer) {
                 $buffer .= $chunk;
@@ -200,7 +196,7 @@ class RequestHeaderParserTest extends TestCase
 
         $data = "POST / HTTP/1.0\r\n\r\n";
         $data .= 'RANDOM DATA';
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertSame('', $buffer);
     }
@@ -212,10 +208,9 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
 
         $buffer = '';
-        $that = $this;
-        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer, $that) {
+        $parser->on('headers', function (ServerRequestInterface $request) use (&$buffer) {
             $body = $request->getBody();
-            $that->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+            $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
 
             $body->on('data', function ($chunk) use (&$buffer) {
                 $buffer .= $chunk;
@@ -227,7 +222,7 @@ class RequestHeaderParserTest extends TestCase
 
         $data = "POST / HTTP/1.0\r\nContent-Length: 6\r\n\r\n";
         $data .= 'RANDOM DATA';
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertSame('RANDOM', $buffer);
     }
@@ -247,17 +242,17 @@ class RequestHeaderParserTest extends TestCase
         $parser->handle($connection);
 
         $data = $this->createAdvancedPostRequest();
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $request);
         $this->assertSame('POST', $request->getMethod());
         $this->assertEquals('http://example.com/foo?bar=baz', $request->getUri());
         $this->assertSame('1.1', $request->getProtocolVersion());
-        $headers = array(
-            'Host' => array('example.com'),
-            'User-Agent' => array('react/alpha'),
-            'Connection' => array('close'),
-        );
+        $headers = [
+            'Host' => ['example.com'],
+            'User-Agent' => ['react/alpha'],
+            'Connection' => ['close']
+        ];
         $this->assertSame($headers, $request->getHeaders());
     }
 
@@ -272,11 +267,11 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress'])->getMock();
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tcp://127.1.1.1:8000');
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\n\r\n"]);
 
         $this->assertEquals('http://127.1.1.1:8000/foo', $request->getUri());
         $this->assertFalse($request->hasHeader('Host'));
@@ -293,11 +288,11 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress'])->getMock();
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tls://127.1.1.1:8000');
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $this->assertEquals('https://example.com/foo', $request->getUri());
         $this->assertEquals('example.com', $request->getHeaderLine('Host'));
@@ -321,7 +316,7 @@ class RequestHeaderParserTest extends TestCase
         $parser->handle($connection);
 
         $data = str_repeat('A', 8193);
-        $connection->emit('data', array($data));
+        $connection->emit('data', [$data]);
 
         $this->assertInstanceOf('OverflowException', $error);
         $this->assertSame('Maximum header size of 8192 exceeded.', $error->getMessage());
@@ -343,7 +338,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("\r\n\r\n"));
+        $connection->emit('data', ["\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Unable to parse invalid request-line', $error->getMessage());
@@ -364,7 +359,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /\r\n\r\n"));
+        $connection->emit('data', ["GET /\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Unable to parse invalid request-line', $error->getMessage());
@@ -385,7 +380,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost : yes\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost : yes\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Unable to parse invalid request header fields', $error->getMessage());
@@ -406,7 +401,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost: yes\rFoo: bar\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost: yes\rFoo: bar\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Unable to parse invalid request header fields', $error->getMessage());
@@ -427,7 +422,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET tcp://example.com:80/ HTTP/1.0\r\n\r\n"));
+        $connection->emit('data', ["GET tcp://example.com:80/ HTTP/1.0\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Invalid absolute-form request-target', $error->getMessage());
@@ -448,15 +443,15 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /somepath?param=http://example.com HTTP/1.1\r\nHost: localhost\r\n\r\n"));
+        $connection->emit('data', ["GET /somepath?param=http://example.com HTTP/1.1\r\nHost: localhost\r\n\r\n"]);
 
         $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $request);
         $this->assertSame('GET', $request->getMethod());
         $this->assertEquals('http://localhost/somepath?param=http://example.com', $request->getUri());
         $this->assertSame('1.1', $request->getProtocolVersion());
-        $headers = array(
-            'Host' => array('localhost')
-        );
+        $headers = [
+            'Host' => ['localhost']
+        ];
         $this->assertSame($headers, $request->getHeaders());
     }
 
@@ -475,7 +470,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET ://example.com:80/ HTTP/1.0\r\n\r\n"));
+        $connection->emit('data', ["GET ://example.com:80/ HTTP/1.0\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Invalid absolute-form request-target', $error->getMessage());
@@ -496,7 +491,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET http://example.com:80/#home HTTP/1.0\r\n\r\n"));
+        $connection->emit('data', ["GET http://example.com:80/#home HTTP/1.0\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Invalid absolute-form request-target', $error->getMessage());
@@ -517,7 +512,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost: http://user:pass@host/\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost: http://user:pass@host/\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Invalid Host header value', $error->getMessage());
@@ -538,7 +533,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET http://example.com/ HTTP/1.1\r\nHost: \r\n\r\n"));
+        $connection->emit('data', ["GET http://example.com/ HTTP/1.1\r\nHost: \r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('Invalid Host header value', $error->getMessage());
@@ -559,7 +554,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("CONNECT http://example.com:8080/ HTTP/1.1\r\nHost: example.com:8080\r\n\r\n"));
+        $connection->emit('data', ["CONNECT http://example.com:8080/ HTTP/1.1\r\nHost: example.com:8080\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame('CONNECT method MUST use authority-form request target', $error->getMessage());
@@ -580,7 +575,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.2\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.2\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame(505, $error->getCode());
@@ -602,7 +597,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: foo\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: foo\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame(400, $error->getCode());
@@ -624,7 +619,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4\r\nContent-Length: 5\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4\r\nContent-Length: 5\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame(400, $error->getCode());
@@ -646,7 +641,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: foo\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: foo\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame(501, $error->getCode());
@@ -668,7 +663,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Length: 0\r\n\r\n"));
+        $connection->emit('data', ["GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Length: 0\r\n\r\n"]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
         $this->assertSame(400, $error->getCode());
@@ -688,12 +683,12 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress', 'getRemoteAddress'])->getMock();
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tls://127.1.1.1:8000');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn('tls://192.168.1.1:8001');
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $serverParams = $request->getServerParams();
 
@@ -721,12 +716,12 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress', 'getRemoteAddress'])->getMock();
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tcp://127.1.1.1:8000');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn('tcp://192.168.1.1:8001');
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $serverParams = $request->getServerParams();
 
@@ -754,12 +749,12 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress', 'getRemoteAddress'])->getMock();
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('unix://./server.sock');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn(null);
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $serverParams = $request->getServerParams();
 
@@ -790,7 +785,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $serverParams = $request->getServerParams();
 
@@ -811,12 +806,12 @@ class RequestHeaderParserTest extends TestCase
 
         $parser = new RequestHeaderParser($clock);
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress', 'getRemoteAddress'])->getMock();
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tcp://127.1.1.1:8000');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn('tcp://192.168.1.1:8001');
 
         $parser->handle($connection);
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $request = null;
         $parser->on('headers', function ($parsedRequest) use (&$request) {
@@ -824,7 +819,7 @@ class RequestHeaderParserTest extends TestCase
         });
 
         $parser->handle($connection);
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         assert($request instanceof ServerRequestInterface);
         $serverParams = $request->getServerParams();
@@ -846,10 +841,10 @@ class RequestHeaderParserTest extends TestCase
 
         $parser = new RequestHeaderParser($clock);
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(['getLocalAddress', 'getRemoteAddress'])->getMock();
 
         $parser->handle($connection);
-        $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $ref = new \ReflectionProperty($parser, 'connectionParams');
         $ref->setAccessible(true);
@@ -857,7 +852,7 @@ class RequestHeaderParserTest extends TestCase
         $this->assertCount(1, $ref->getValue($parser));
 
         $connection->emit('close');
-        $this->assertEquals(array(), $ref->getValue($parser));
+        $this->assertEquals([], $ref->getValue($parser));
     }
 
     public function testQueryParmetersWillBeSet()
@@ -875,7 +870,7 @@ class RequestHeaderParserTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
         $parser->handle($connection);
 
-        $connection->emit('data', array("GET /foo.php?hello=world&test=this HTTP/1.0\r\nHost: example.com\r\n\r\n"));
+        $connection->emit('data', ["GET /foo.php?hello=world&test=this HTTP/1.0\r\nHost: example.com\r\n\r\n"]);
 
         $queryParams = $request->getQueryParams();
 

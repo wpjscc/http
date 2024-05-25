@@ -40,8 +40,7 @@ final class MiddlewareRunner
         return $this->call($request, 0);
     }
 
-    /** @internal */
-    public function call(ServerRequestInterface $request, $position)
+    private function call(ServerRequestInterface $request, $position)
     {
         // final request handler will be invoked without a next handler
         if (!isset($this->middleware[$position + 1])) {
@@ -49,9 +48,8 @@ final class MiddlewareRunner
             return $handler($request);
         }
 
-        $that = $this;
-        $next = function (ServerRequestInterface $request) use ($that, $position) {
-            return $that->call($request, $position + 1);
+        $next = function (ServerRequestInterface $request) use ($position) {
+            return $this->call($request, $position + 1);
         };
 
         // invoke middleware request handler with next handler

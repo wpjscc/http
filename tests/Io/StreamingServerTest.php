@@ -12,6 +12,7 @@ use React\Promise\Promise;
 use React\Stream\ThroughStream;
 use React\Tests\Http\SocketServerStub;
 use React\Tests\Http\TestCase;
+use function React\Promise\resolve;
 
 class StreamingServerTest extends TestCase
 {
@@ -37,7 +38,7 @@ class StreamingServerTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\Connection')
             ->disableOriginalConstructor()
             ->setMethods(array_merge(
-                array(
+                [
                     'write',
                     'end',
                     'close',
@@ -48,8 +49,8 @@ class StreamingServerTest extends TestCase
                     'getRemoteAddress',
                     'getLocalAddress',
                     'pipe'
-                ),
-                (is_array($additionalMethods) ? $additionalMethods : array())
+                ],
+                (is_array($additionalMethods) ? $additionalMethods : [])
             ))
             ->getMock();
 
@@ -64,11 +65,11 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), $this->expectCallableNever());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = '';
         $data .= "GET / HTTP/1.1\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestEventIsEmitted()
@@ -76,22 +77,22 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), $this->expectCallableOnce());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestEventIsEmittedForArrayCallable()
     {
         $this->called = null;
-        $server = new StreamingServer(Loop::get(), array($this, 'helperCallableOnce'));
+        $server = new StreamingServer(Loop::get(), [$this, 'helperCallableOnce']);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals(1, $this->called);
     }
@@ -116,10 +117,10 @@ class StreamingServerTest extends TestCase
             ->willReturn('127.0.0.1:8080');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $serverParams = $requestAssertion->getServerParams();
 
@@ -128,7 +129,7 @@ class StreamingServerTest extends TestCase
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
-        $this->assertSame(array(), $requestAssertion->getQueryParams());
+        $this->assertSame([], $requestAssertion->getQueryParams());
         $this->assertSame('http://example.com/', (string)$requestAssertion->getUri());
         $this->assertSame('example.com', $requestAssertion->getHeaderLine('Host'));
         $this->assertSame('127.0.0.1', $serverParams['REMOTE_ADDR']);
@@ -149,10 +150,10 @@ class StreamingServerTest extends TestCase
             ->willReturn('127.0.0.1:8080');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $serverParams = $requestAssertion->getServerParams();
 
@@ -161,7 +162,7 @@ class StreamingServerTest extends TestCase
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
-        $this->assertSame(array(), $requestAssertion->getQueryParams());
+        $this->assertSame([], $requestAssertion->getQueryParams());
         $this->assertSame('http://example.com/', (string)$requestAssertion->getUri());
         $this->assertSame('example.com', $requestAssertion->getHeaderLine('Host'));
         $this->assertSame('127.0.0.1', $serverParams['REMOTE_ADDR']);
@@ -175,10 +176,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: example.com:8080\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -197,10 +198,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: example.com:443\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -219,10 +220,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -241,10 +242,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.0\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -262,10 +263,10 @@ class StreamingServerTest extends TestCase
         $server->on('error', $this->expectCallableOnce());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestOptionsAsterisk()
@@ -276,10 +277,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "OPTIONS * HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('OPTIONS', $requestAssertion->getMethod());
@@ -295,10 +296,10 @@ class StreamingServerTest extends TestCase
         $server->on('error', $this->expectCallableOnce());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET * HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestConnectAuthorityForm()
@@ -309,10 +310,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
@@ -331,10 +332,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "CONNECT example.com:443 HTTP/1.1\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
@@ -353,10 +354,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
@@ -375,10 +376,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: other.example.org\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
@@ -395,10 +396,10 @@ class StreamingServerTest extends TestCase
         $server->on('error', $this->expectCallableOnce());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "CONNECT / HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestNonConnectWithAuthorityRequestTargetWillReject()
@@ -407,10 +408,10 @@ class StreamingServerTest extends TestCase
         $server->on('error', $this->expectCallableOnce());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET example.com:80 HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestWithoutHostEventUsesSocketAddress()
@@ -427,10 +428,10 @@ class StreamingServerTest extends TestCase
             ->willReturn('127.0.0.1:80');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET /test HTTP/1.0\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -448,10 +449,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET http://example.com/test HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -470,10 +471,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET http://example.com/test HTTP/1.1\r\nHost: other.example.org\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -489,10 +490,10 @@ class StreamingServerTest extends TestCase
         $server->on('error', $this->expectCallableOnce());
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET http://example.com:8080/test HTTP/1.1\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestOptionsAsteriskEvent()
@@ -504,10 +505,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "OPTIONS * HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('OPTIONS', $requestAssertion->getMethod());
@@ -526,10 +527,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "OPTIONS http://example.com HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
         $this->assertSame('OPTIONS', $requestAssertion->getMethod());
@@ -548,7 +549,7 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->once())->method('pause');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -556,7 +557,7 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 5\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestResumeWillBeForwardedToConnection()
@@ -568,7 +569,7 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->once())->method('resume');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -576,7 +577,7 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 5\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestCloseWillNotCloseConnection()
@@ -588,10 +589,10 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestPauseAfterCloseWillNotBeForwarded()
@@ -605,10 +606,10 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('pause');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestResumeAfterCloseWillNotBeForwarded()
@@ -622,10 +623,10 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('resume');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestEventWithoutBodyWillNotEmitData()
@@ -637,10 +638,10 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestEventWithSecondDataEventWillEmitBodyData()
@@ -652,7 +653,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = '';
         $data .= "POST / HTTP/1.1\r\n";
@@ -660,7 +661,7 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 100\r\n";
         $data .= "\r\n";
         $data .= "incomplete";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestEventWithPartialBodyWillEmitData()
@@ -672,18 +673,18 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = '';
         $data .= "POST / HTTP/1.1\r\n";
         $data .= "Host: localhost\r\n";
         $data .= "Content-Length: 100\r\n";
         $data .= "\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $data = '';
         $data .= "incomplete";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testResponseContainsServerHeader()
@@ -706,10 +707,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("\r\nServer: ReactPHP/1\r\n", $buffer);
     }
@@ -736,10 +737,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals('', $buffer);
     }
@@ -766,10 +767,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->connection->emit('close');
 
         $this->assertEquals('', $buffer);
@@ -783,7 +784,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
@@ -802,10 +803,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertStringEndsWith("\r\n\r\n0\r\n\r\n", $buffer);
@@ -818,7 +819,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
@@ -837,10 +838,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $stream->end();
 
@@ -856,7 +857,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
@@ -875,10 +876,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertStringStartsWith("HTTP/1.0 200 OK\r\n", $buffer);
         $this->assertStringEndsWith("\r\n\r\n", $buffer);
@@ -892,7 +893,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
@@ -913,7 +914,7 @@ class StreamingServerTest extends TestCase
         $this->connection = $this->getMockBuilder('React\Socket\Connection')
             ->disableOriginalConstructor()
             ->setMethods(
-                array(
+                [
                     'write',
                     'end',
                     'close',
@@ -924,7 +925,7 @@ class StreamingServerTest extends TestCase
                     'getRemoteAddress',
                     'getLocalAddress',
                     'pipe'
-                )
+                ]
             )
             ->getMock();
 
@@ -933,10 +934,10 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('write');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testResponseBodyStreamWillBeClosedIfConnectionEmitsCloseEvent()
@@ -947,16 +948,16 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->connection->emit('close');
     }
 
@@ -965,11 +966,11 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(
+                [
                     'date' => '',
                     'server' => '',
                     'Upgrade' => 'demo'
-                ),
+                ],
                 'foo'
             );
         });
@@ -988,10 +989,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals("HTTP/1.1 200 OK\r\nUpgrade: demo\r\nContent-Length: 3\r\n\r\nfoo", $buffer);
     }
@@ -1001,10 +1002,10 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(
+                [
                     'date' => '',
                     'server' => ''
-                ),
+                ],
                 'foo'
             );
         });
@@ -1023,10 +1024,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: demo\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo", $buffer);
     }
@@ -1036,11 +1037,11 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 101,
-                array(
+                [
                     'date' => '',
                     'server' => '',
                     'Upgrade' => 'demo'
-                ),
+                ],
                 'foo'
             );
         });
@@ -1061,10 +1062,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: demo\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals("HTTP/1.1 101 Switching Protocols\r\nUpgrade: demo\r\nConnection: upgrade\r\n\r\nfoo", $buffer);
     }
@@ -1076,11 +1077,11 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 101,
-                array(
+                [
                     'date' => '',
                     'server' => '',
                     'Upgrade' => 'demo'
-                ),
+                ],
                 $stream
             );
         });
@@ -1099,10 +1100,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: demo\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $stream->write('hello');
         $stream->write('world');
@@ -1117,7 +1118,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
@@ -1136,10 +1137,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $stream->write('hello');
         $stream->write('world');
@@ -1155,18 +1156,18 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('pipe')->with($stream);
 
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testResponseContainsSameRequestProtocolVersionAndChunkedBodyForHttp11()
@@ -1174,7 +1175,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(),
+                [],
                 'bye'
             );
         });
@@ -1193,10 +1194,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("bye", $buffer);
@@ -1207,7 +1208,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(),
+                [],
                 'bye'
             );
         });
@@ -1226,10 +1227,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.0\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.0 200 OK\r\n", $buffer);
         $this->assertContainsString("\r\n\r\n", $buffer);
@@ -1241,7 +1242,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(),
+                [],
                 'bye'
             );
         });
@@ -1259,10 +1260,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1277,7 +1278,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array('Content-Length' => '3'),
+                ['Content-Length' => '3'],
                 $stream
             );
         });
@@ -1295,10 +1296,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1309,7 +1310,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 204,
-                array(),
+                [],
                 'bye'
             );
         });
@@ -1327,10 +1328,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
         $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1345,7 +1346,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 204,
-                array('Content-Length' => '3'),
+                ['Content-Length' => '3'],
                 $stream
             );
         });
@@ -1363,10 +1364,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
         $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1377,7 +1378,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 304,
-                array(),
+                [],
                 ''
             );
         });
@@ -1395,10 +1396,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
         $this->assertNotContainsString("\r\nContent-Length: 0\r\n", $buffer);
@@ -1409,7 +1410,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 304,
-                array('Content-Length' => 3),
+                ['Content-Length' => 3],
                 ''
             );
         });
@@ -1427,10 +1428,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
         $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1441,7 +1442,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array('Content-Length' => 3),
+                ['Content-Length' => 3],
                 ''
             );
         });
@@ -1459,10 +1460,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1473,7 +1474,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 304,
-                array(),
+                [],
                 'bye'
             );
         });
@@ -1491,10 +1492,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
         $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1509,7 +1510,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 304,
-                array('Content-Length' => '3'),
+                ['Content-Length' => '3'],
                 $stream
             );
         });
@@ -1527,10 +1528,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
         $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
@@ -1558,10 +1559,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.2\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
 
@@ -1592,11 +1593,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\nX-DATA: ";
         $data .= str_repeat('A', 8193 - strlen($data)) . "\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('OverflowException', $error);
 
@@ -1626,10 +1627,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "bad request\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
 
@@ -1652,7 +1653,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1661,7 +1662,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "hello";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestChunkedTransferEncodingRequestWillEmitDecodedDataEventOnRequestStream()
@@ -1681,7 +1682,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1691,7 +1692,7 @@ class StreamingServerTest extends TestCase
         $data .= "5\r\nhello\r\n";
         $data .= "0\r\n\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals('chunked', $requestValidation->getHeaderLine('Transfer-Encoding'));
     }
@@ -1711,7 +1712,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1722,7 +1723,7 @@ class StreamingServerTest extends TestCase
         $data .= "0\r\n\r\n";
         $data .= "2\r\nhi\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestChunkedTransferEncodingEmpty()
@@ -1740,7 +1741,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1749,7 +1750,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "0\r\n\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestChunkedTransferEncodingHeaderCanBeUpperCase()
@@ -1769,7 +1770,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1779,7 +1780,7 @@ class StreamingServerTest extends TestCase
         $data .= "5\r\nhello\r\n";
         $data .= "0\r\n\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->assertEquals('CHUNKED', $requestValidation->getHeaderLine('Transfer-Encoding'));
     }
 
@@ -1798,7 +1799,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1807,7 +1808,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "5\r\nhello\r\n";
         $data .= "0\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestContentLengthWillEmitDataEventAndEndEventAndAdditionalDataWillBeIgnored()
@@ -1823,11 +1824,11 @@ class StreamingServerTest extends TestCase
             $request->getBody()->on('close', $closeEvent);
             $request->getBody()->on('error', $errorEvent);
 
-            return \React\Promise\resolve(new Response());
+            return resolve(new Response());
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1837,7 +1838,7 @@ class StreamingServerTest extends TestCase
         $data .= "hello";
         $data .= "world";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestContentLengthWillEmitDataEventAndEndEventAndAdditionalDataWillBeIgnoredSplitted()
@@ -1856,7 +1857,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1865,11 +1866,11 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "hello";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $data = "world";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestZeroContentLengthWillEmitEndEvent()
@@ -1888,7 +1889,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1896,7 +1897,7 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 0\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestZeroContentLengthWillEmitEndAndAdditionalDataWillBeIgnored()
@@ -1914,7 +1915,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1923,7 +1924,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "hello";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestZeroContentLengthWillEmitEndAndAdditionalDataWillBeIgnoredSplitted()
@@ -1941,7 +1942,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1949,11 +1950,11 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 0\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $data = "hello";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestInvalidChunkHeaderTooLongWillEmitErrorOnRequestStream()
@@ -1961,13 +1962,13 @@ class StreamingServerTest extends TestCase
         $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf('Exception'));
         $server = new StreamingServer(Loop::get(), function ($request) use ($errorEvent){
             $request->getBody()->on('error', $errorEvent);
-            return \React\Promise\resolve(new Response());
+            return resolve(new Response());
         });
 
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1978,7 +1979,7 @@ class StreamingServerTest extends TestCase
             $data .= 'a';
         }
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestInvalidChunkBodyTooLongWillEmitErrorOnRequestStream()
@@ -1991,7 +1992,7 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2000,7 +2001,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "5\r\nhello world\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestUnexpectedEndOfRequestWithChunkedTransferConnectionWillEmitErrorOnRequestStream()
@@ -2013,7 +2014,7 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2022,7 +2023,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "5\r\nhello\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->connection->emit('end');
     }
 
@@ -2036,7 +2037,7 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2045,7 +2046,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "hello\r\nhello\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestUnexpectedEndOfRequestWithContentLengthWillEmitErrorOnRequestStream()
@@ -2058,7 +2059,7 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2067,7 +2068,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "incomplete";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->connection->emit('end');
     }
 
@@ -2088,11 +2089,11 @@ class StreamingServerTest extends TestCase
         $this->connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testRequestWithoutDefinedLengthWillIgnoreDataEvent()
@@ -2110,12 +2111,12 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
         $data .= "hello world";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
     }
 
     public function testResponseWithBodyStreamWillUseChunkedTransferEncodingByDefault()
@@ -2124,7 +2125,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(),
+                [],
                 $stream
             );
         });
@@ -2142,12 +2143,12 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
-        $stream->emit('data', array('hello'));
+        $this->connection->emit('data', [$data]);
+        $stream->emit('data', ['hello']);
 
         $this->assertContainsString("Transfer-Encoding: chunked", $buffer);
         $this->assertContainsString("hello", $buffer);
@@ -2158,10 +2159,10 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(
+                [
                     'Content-Length' => 1000,
                     'Transfer-Encoding' => 'chunked'
-                ),
+                ],
                 'hello'
             );
         });
@@ -2179,11 +2180,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertNotContainsString("Transfer-Encoding: chunked", $buffer);
         $this->assertContainsString("Content-Length: 5", $buffer);
@@ -2199,7 +2200,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($body) {
             return new Response(
                 200,
-                array(),
+                [],
                 $body
             );
         });
@@ -2217,10 +2218,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("Transfer-Encoding: chunked", $buffer);
         $this->assertNotContainsString("Content-Length:", $buffer);
@@ -2236,7 +2237,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($body) {
             return new Response(
                 200,
-                array(),
+                [],
                 $body
             );
         });
@@ -2254,10 +2255,10 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertNotContainsString("Transfer-Encoding: chunked", $buffer);
         $this->assertNotContainsString("Content-Length:", $buffer);
@@ -2270,9 +2271,9 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($stream) {
             return new Response(
                 200,
-                array(
+                [
                     'Transfer-Encoding' => 'custom'
-                ),
+                ],
                 $stream
             );
         });
@@ -2290,12 +2291,12 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
-        $stream->emit('data', array('hello'));
+        $this->connection->emit('data', [$data]);
+        $stream->emit('data', ['hello']);
 
         $this->assertContainsString('Transfer-Encoding: chunked', $buffer);
         $this->assertNotContainsString('Transfer-Encoding: custom', $buffer);
@@ -2329,11 +2330,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("Date: Thu, 19 May 2022 14:54:51 GMT\r\n", $buffer);
@@ -2345,7 +2346,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array("Date" => "Tue, 15 Nov 1994 08:12:31 GMT")
+                ["Date" => "Tue, 15 Nov 1994 08:12:31 GMT"]
             );
         });
 
@@ -2362,11 +2363,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("Date: Tue, 15 Nov 1994 08:12:31 GMT\r\n", $buffer);
@@ -2378,7 +2379,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array('Date' => '')
+                ['Date' => '']
             );
         });
 
@@ -2395,11 +2396,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertNotContainsString("Date:", $buffer);
@@ -2411,14 +2412,14 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array(
-                    'Set-Cookie' => array(
+                [
+                    'Set-Cookie' => [
                         'name=test',
                         'session=abc'
-                    ),
+                    ],
                     'Date' => '',
                     'Server' => ''
-                )
+                ]
             );
         });
 
@@ -2435,11 +2436,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertEquals("HTTP/1.1 200 OK\r\nSet-Cookie: name=test\r\nSet-Cookie: session=abc\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", $buffer);
     }
@@ -2463,7 +2464,7 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2471,7 +2472,7 @@ class StreamingServerTest extends TestCase
         $data .= "Expect: 100-continue\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->assertContainsString("HTTP/1.1 100 Continue\r\n", $buffer);
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
     }
@@ -2495,13 +2496,13 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.0\r\n";
         $data .= "Expect: 100-continue\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->assertContainsString("HTTP/1.0 200 OK\r\n", $buffer);
         $this->assertNotContainsString("HTTP/1.1 100 Continue\r\n\r\n", $buffer);
     }
@@ -2519,7 +2520,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($input) {
             return new Response(
                 200,
-                array(),
+                [],
                 $input
             );
         });
@@ -2537,13 +2538,13 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
-        $input->emit('data', array('1'));
-        $input->emit('data', array('23'));
+        $this->connection->emit('data', [$data]);
+        $input->emit('data', ['1']);
+        $input->emit('data', ['23']);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("\r\n\r\n", $buffer);
@@ -2558,7 +2559,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) use ($input) {
             return new Response(
                 200,
-                array('Content-Length' => 5),
+                ['Content-Length' => 5],
                 $input
             );
         });
@@ -2576,13 +2577,13 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
-        $input->emit('data', array('hel'));
-        $input->emit('data', array('lo'));
+        $this->connection->emit('data', [$data]);
+        $input->emit('data', ['hel']);
+        $input->emit('data', ['lo']);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("Content-Length: 5\r\n", $buffer);
@@ -2594,7 +2595,7 @@ class StreamingServerTest extends TestCase
     public function testResponseWithResponsePromise()
     {
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
-            return \React\Promise\resolve(new Response());
+            return resolve(new Response());
         });
 
         $buffer = '';
@@ -2610,11 +2611,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("\r\n\r\n", $buffer);
     }
@@ -2643,11 +2644,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertInstanceOf('RuntimeException', $exception);
@@ -2656,7 +2657,7 @@ class StreamingServerTest extends TestCase
     public function testResponseResolveWrongTypeInPromiseWillResultInError()
     {
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
-            return \React\Promise\resolve("invalid");
+            return resolve("invalid");
         });
 
         $buffer = '';
@@ -2672,11 +2673,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
     }
@@ -2703,11 +2704,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
     }
@@ -2734,11 +2735,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
     }
@@ -2748,7 +2749,7 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response(
                 200,
-                array('Transfer-Encoding' => 'chunked'),
+                ['Transfer-Encoding' => 'chunked'],
                 'hello'
             );
         });
@@ -2766,11 +2767,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
         $this->assertContainsString("Content-Length: 5\r\n", $buffer);
@@ -2798,11 +2799,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
     }
@@ -2831,11 +2832,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertInstanceOf('RuntimeException', $exception);
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
@@ -2866,12 +2867,12 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
         try {
-            $this->connection->emit('data', array($data));
+            $this->connection->emit('data', [$data]);
         } catch (\Error $e) {
             $this->markTestSkipped(
                 'A \Throwable bubbled out of the request callback. ' .
@@ -2911,11 +2912,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertInstanceOf('RuntimeException', $exception);
@@ -2923,49 +2924,49 @@ class StreamingServerTest extends TestCase
 
     public static function provideInvalidResponse()
     {
-        $response = new Response(200, array(), '', '1.1', 'OK');
+        $response = new Response(200, [], '', '1.1', 'OK');
 
-        return array(
-            array(
+        return [
+            [
                 $response->withStatus(99, 'OK')
-            ),
-            array(
+            ],
+            [
                 $response->withStatus(1000, 'OK')
-            ),
-            array(
+            ],
+            [
                 $response->withStatus(200, "Invald\r\nReason: Yes")
-            ),
-            array(
+            ],
+            [
                 $response->withHeader('Invalid', "Yes\r\n")
-            ),
-            array(
+            ],
+            [
                 $response->withHeader('Invalid', "Yes\n")
-            ),
-            array(
+            ],
+            [
                 $response->withHeader('Invalid', "Yes\r")
-            ),
-            array(
+            ],
+            [
                 $response->withHeader("Inva\r\nlid", 'Yes')
-            ),
-            array(
+            ],
+            [
                 $response->withHeader("Inva\nlid", 'Yes')
-            ),
-            array(
+            ],
+            [
                 $response->withHeader("Inva\rlid", 'Yes')
-            ),
-            array(
+            ],
+            [
                 $response->withHeader('Inva Lid', 'Yes')
-            ),
-            array(
+            ],
+            [
                 $response->withHeader('Inva:Lid', 'Yes')
-            ),
-            array(
+            ],
+            [
                 $response->withHeader('Invalid', "Val\0ue")
-            ),
-            array(
+            ],
+            [
                 $response->withHeader("Inva\0lid", 'Yes')
-            )
-        );
+            ]
+        ];
     }
 
     /**
@@ -2996,11 +2997,11 @@ class StreamingServerTest extends TestCase
             );
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertInstanceOf('InvalidArgumentException', $exception);
@@ -3024,11 +3025,11 @@ class StreamingServerTest extends TestCase
             ->willReturn('127.0.0.1:8080');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $serverParams = $requestValidation->getServerParams();
 
@@ -3048,11 +3049,11 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET /foo.php?hello=world&test=bar HTTP/1.0\r\n\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
         $queryParams = $requestValidation->getQueryParams();
 
@@ -3068,7 +3069,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -3076,9 +3077,9 @@ class StreamingServerTest extends TestCase
         $data .= "Cookie: hello=world\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $this->connection->emit('data', [$data]);
 
-        $this->assertEquals(array('hello' => 'world'), $requestValidation->getCookieParams());
+        $this->assertEquals(['hello' => 'world'], $requestValidation->getCookieParams());
     }
 
     public function testRequestInvalidMultipleCookiesWontBeAddedToServerRequest()
@@ -3089,7 +3090,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -3098,8 +3099,8 @@ class StreamingServerTest extends TestCase
         $data .= "Cookie: test=failed\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
-        $this->assertEquals(array(), $requestValidation->getCookieParams());
+        $this->connection->emit('data', [$data]);
+        $this->assertEquals([], $requestValidation->getCookieParams());
     }
 
     public function testRequestCookieWithSeparatorWillBeAddedToServerRequest()
@@ -3110,7 +3111,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -3118,8 +3119,8 @@ class StreamingServerTest extends TestCase
         $data .= "Cookie: hello=world; test=abc\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
-        $this->assertEquals(array('hello' => 'world', 'test' => 'abc'), $requestValidation->getCookieParams());
+        $this->connection->emit('data', [$data]);
+        $this->assertEquals(['hello' => 'world', 'test' => 'abc'], $requestValidation->getCookieParams());
     }
 
     public function testRequestCookieWithCommaValueWillBeAddedToServerRequest()
@@ -3130,7 +3131,7 @@ class StreamingServerTest extends TestCase
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -3138,8 +3139,8 @@ class StreamingServerTest extends TestCase
         $data .= "Cookie: test=abc,def; hello=world\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
-        $this->assertEquals(array('test' => 'abc,def', 'hello' => 'world'), $requestValidation->getCookieParams());
+        $this->connection->emit('data', [$data]);
+        $this->assertEquals(['test' => 'abc,def', 'hello' => 'world'], $requestValidation->getCookieParams());
     }
 
     public function testNewConnectionWillInvokeParserOnce()
@@ -3154,12 +3155,12 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
     }
 
     public function testNewConnectionWillInvokeParserOnceAndInvokeRequestHandlerWhenParserIsDoneForHttp10()
     {
-        $request = new ServerRequest('GET', 'http://localhost/', array(), '', '1.0');
+        $request = new ServerRequest('GET', 'http://localhost/', [], '', '1.0');
 
         $server = new StreamingServer(Loop::get(), $this->expectCallableOnceWith($request));
 
@@ -3171,7 +3172,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('write');
         $this->connection->expects($this->once())->method('end');
@@ -3182,7 +3183,7 @@ class StreamingServerTest extends TestCase
 
     public function testNewConnectionWillInvokeParserOnceAndInvokeRequestHandlerWhenParserIsDoneForHttp11ConnectionClose()
     {
-        $request = new ServerRequest('GET', 'http://localhost/', array('Connection' => 'close'));
+        $request = new ServerRequest('GET', 'http://localhost/', ['Connection' => 'close']);
 
         $server = new StreamingServer(Loop::get(), $this->expectCallableOnceWith($request));
 
@@ -3194,7 +3195,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('write');
         $this->connection->expects($this->once())->method('end');
@@ -3208,7 +3209,7 @@ class StreamingServerTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $server = new StreamingServer(Loop::get(), function () {
-            return new Response(200, array('Connection' => 'close'));
+            return new Response(200, ['Connection' => 'close']);
         });
 
         $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
@@ -3219,7 +3220,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('write');
         $this->connection->expects($this->once())->method('end');
@@ -3244,7 +3245,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('write');
         $this->connection->expects($this->never())->method('end');
@@ -3255,7 +3256,7 @@ class StreamingServerTest extends TestCase
 
     public function testNewConnectionWillInvokeParserTwiceAfterInvokingRequestHandlerWhenConnectionCanBeKeptAliveForHttp10ConnectionKeepAlive()
     {
-        $request = new ServerRequest('GET', 'http://localhost/', array('Connection' => 'keep-alive'), '', '1.0');
+        $request = new ServerRequest('GET', 'http://localhost/', ['Connection' => 'keep-alive'], '', '1.0');
 
         $server = new StreamingServer(Loop::get(), function () {
             return new Response();
@@ -3269,7 +3270,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('write');
         $this->connection->expects($this->never())->method('end');
@@ -3284,7 +3285,7 @@ class StreamingServerTest extends TestCase
 
         $body = new ThroughStream();
         $server = new StreamingServer(Loop::get(), function () use ($body) {
-            return new Response(200, array(), $body);
+            return new Response(200, [], $body);
         });
 
         $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
@@ -3295,7 +3296,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->once())->method('write');
         $this->connection->expects($this->never())->method('end');
@@ -3310,7 +3311,7 @@ class StreamingServerTest extends TestCase
 
         $body = new ThroughStream();
         $server = new StreamingServer(Loop::get(), function () use ($body) {
-            return new Response(200, array(), $body);
+            return new Response(200, [], $body);
         });
 
         $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
@@ -3321,7 +3322,7 @@ class StreamingServerTest extends TestCase
         $ref->setValue($server, $parser);
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $this->connection->expects($this->exactly(2))->method('write');
         $this->connection->expects($this->never())->method('end');
@@ -3336,16 +3337,16 @@ class StreamingServerTest extends TestCase
 
     public function testCompletingARequestWillRemoveConnectionOnCloseListener()
     {
-        $connection = $this->mockConnection(array('removeListener'));
+        $connection = $this->mockConnection(['removeListener']);
 
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $server = new StreamingServer(Loop::get(), function () {
-            return \React\Promise\resolve(new Response());
+            return resolve(new Response());
         });
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($connection));
+        $this->socket->emit('connection', [$connection]);
 
         $connection->expects($this->once())->method('removeListener');
 

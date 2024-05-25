@@ -27,9 +27,9 @@ use React\Socket\ServerInterface;
  * $http = new React\Http\HttpServer(function (Psr\Http\Message\ServerRequestInterface $request) {
  *     return new React\Http\Message\Response(
  *         React\Http\Message\Response::STATUS_OK,
- *         array(
+ *         [
  *             'Content-Type' => 'text/plain'
- *         ),
+ *         ],
  *         "Hello World!\n"
  *     );
  * });
@@ -222,7 +222,7 @@ final class HttpServer extends EventEmitter
             }
         }
 
-        $middleware = array();
+        $middleware = [];
         if (!$streaming) {
             $maxSize = $this->getMaxRequestSize();
             $concurrency = $this->getConcurrentRequestsLimit(\ini_get('memory_limit'), $maxSize);
@@ -253,9 +253,8 @@ final class HttpServer extends EventEmitter
 
         $this->streamingServer = new StreamingServer($loop, new MiddlewareRunner($middleware));
 
-        $that = $this;
-        $this->streamingServer->on('error', function ($error) use ($that) {
-            $that->emit('error', array($error));
+        $this->streamingServer->on('error', function ($error) {
+            $this->emit('error', [$error]);
         });
     }
 
@@ -299,11 +298,11 @@ final class HttpServer extends EventEmitter
      * ```php
      * $http = new React\Http\HttpServer($handler);
      *
-     * $socket = new React\Socket\SocketServer('tls://0.0.0.0:8443', array(
-     *     'tls' => array(
+     * $socket = new React\Socket\SocketServer('tls://0.0.0.0:8443', [
+     *     'tls' => [
      *         'local_cert' => __DIR__ . '/localhost.pem'
-     *     )
-     * ));
+     *     ]
+     * ]);
      * $http->listen($socket);
      * ```
      *
@@ -340,7 +339,7 @@ final class HttpServer extends EventEmitter
      */
     private function getMaxRequestSize($post_max_size = null)
     {
-        $maxSize = IniUtil::iniSizeToBytes($post_max_size === null ? \ini_get('post_max_size') : $post_max_size);
+        $maxSize = IniUtil::iniSizeToBytes($post_max_size ?? \ini_get('post_max_size'));
 
         return ($maxSize === 0 || $maxSize >= self::MAXIMUM_BUFFER_SIZE) ? self::MAXIMUM_BUFFER_SIZE : $maxSize;
     }

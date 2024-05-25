@@ -166,7 +166,7 @@ final class MultipartParser
             $this->parseFile(
                 $name,
                 $filename,
-                isset($headers['content-type'][0]) ? $headers['content-type'][0] : null,
+                $headers['content-type'][0] ?? null,
                 $body
             );
         } else {
@@ -268,7 +268,7 @@ final class MultipartParser
 
     private function parseHeaders($header)
     {
-        $headers = array();
+        $headers = [];
 
         foreach (\explode("\r\n", \trim($header)) as $line) {
             $parts = \explode(':', $line, 2);
@@ -315,12 +315,12 @@ final class MultipartParser
             $previousChunkKey = $chunkKey;
 
             if ($previousChunkKey === '') {
-                $parent[] = array();
+                $parent[] = [];
                 \end($parent);
                 $parent = &$parent[\key($parent)];
             } else {
                 if (!isset($parent[$previousChunkKey]) || !\is_array($parent[$previousChunkKey])) {
-                    $parent[$previousChunkKey] = array();
+                    $parent[$previousChunkKey] = [];
                 }
                 $parent = &$parent[$previousChunkKey];
             }

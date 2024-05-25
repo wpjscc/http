@@ -21,7 +21,7 @@ class ServerRequestTest extends TestCase
 
     public function testGetNoAttributes()
     {
-        $this->assertEquals(array(), $this->request->getAttributes());
+        $this->assertEquals([], $this->request->getAttributes());
     }
 
     public function testWithAttribute()
@@ -29,7 +29,7 @@ class ServerRequestTest extends TestCase
         $request = $this->request->withAttribute('hello', 'world');
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('hello' => 'world'), $request->getAttributes());
+        $this->assertEquals(['hello' => 'world'], $request->getAttributes());
     }
 
     public function testGetAttribute()
@@ -56,61 +56,61 @@ class ServerRequestTest extends TestCase
         $request = $request->withoutAttribute('hello');
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('test' => 'nice'), $request->getAttributes());
+        $this->assertEquals(['test' => 'nice'], $request->getAttributes());
     }
 
     public function testGetQueryParamsFromConstructorUri()
     {
         $this->request = new ServerRequest('GET', 'http://localhost/?test=world');
 
-        $this->assertEquals(array('test' => 'world'), $this->request->getQueryParams());
+        $this->assertEquals(['test' => 'world'], $this->request->getQueryParams());
     }
 
     public function testWithCookieParams()
     {
-        $request = $this->request->withCookieParams(array('test' => 'world'));
+        $request = $this->request->withCookieParams(['test' => 'world']);
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('test' => 'world'), $request->getCookieParams());
+        $this->assertEquals(['test' => 'world'], $request->getCookieParams());
     }
 
     public function testGetQueryParamsFromConstructorUriUrlencoded()
     {
         $this->request = new ServerRequest('GET', 'http://localhost/?test=hello+world%21');
 
-        $this->assertEquals(array('test' => 'hello world!'), $this->request->getQueryParams());
+        $this->assertEquals(['test' => 'hello world!'], $this->request->getQueryParams());
     }
 
     public function testWithQueryParams()
     {
-        $request = $this->request->withQueryParams(array('test' => 'world'));
+        $request = $this->request->withQueryParams(['test' => 'world']);
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('test' => 'world'), $request->getQueryParams());
+        $this->assertEquals(['test' => 'world'], $request->getQueryParams());
     }
 
     public function testWithQueryParamsWithoutSpecialEncoding()
     {
-        $request = $this->request->withQueryParams(array('test' => 'hello world!'));
+        $request = $this->request->withQueryParams(['test' => 'hello world!']);
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('test' => 'hello world!'), $request->getQueryParams());
+        $this->assertEquals(['test' => 'hello world!'], $request->getQueryParams());
     }
 
     public function testWithUploadedFiles()
     {
-        $request = $this->request->withUploadedFiles(array('test' => 'world'));
+        $request = $this->request->withUploadedFiles(['test' => 'world']);
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('test' => 'world'), $request->getUploadedFiles());
+        $this->assertEquals(['test' => 'world'], $request->getUploadedFiles());
     }
 
     public function testWithParsedBody()
     {
-        $request = $this->request->withParsedBody(array('test' => 'world'));
+        $request = $this->request->withParsedBody(['test' => 'world']);
 
         $this->assertNotSame($request, $this->request);
-        $this->assertEquals(array('test' => 'world'), $request->getParsedBody());
+        $this->assertEquals(['test' => 'world'], $request->getParsedBody());
     }
 
     public function testServerRequestParameter()
@@ -119,10 +119,10 @@ class ServerRequestTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://127.0.0.1',
-            array('Content-Length' => strlen($body)),
+            ['Content-Length' => strlen($body)],
             $body,
             '1.0',
-            array('SERVER_ADDR' => '127.0.0.1')
+            ['SERVER_ADDR' => '127.0.0.1']
         );
 
         $serverParams = $request->getServerParams();
@@ -139,11 +139,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'hello=world')
+            ['Cookie' => 'hello=world']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('hello' => 'world'), $cookies);
+        $this->assertEquals(['hello' => 'world'], $cookies);
     }
 
     public function testParseMultipleCookieNameValuePairWillReturnValidArray()
@@ -151,11 +151,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'hello=world; test=abc')
+            ['Cookie' => 'hello=world; test=abc']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('hello' => 'world', 'test' => 'abc'), $cookies);
+        $this->assertEquals(['hello' => 'world', 'test' => 'abc'], $cookies);
     }
 
     public function testParseMultipleCookieHeadersAreNotAllowedAndWillReturnEmptyArray()
@@ -163,11 +163,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => array('hello=world', 'test=abc'))
+            ['Cookie' => ['hello=world', 'test=abc']]
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array(), $cookies);
+        $this->assertEquals([], $cookies);
     }
 
     public function testMultipleCookiesWithSameNameWillReturnLastValue()
@@ -175,11 +175,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'hello=world; hello=abc')
+            ['Cookie' => 'hello=world; hello=abc']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('hello' => 'abc'), $cookies);
+        $this->assertEquals(['hello' => 'abc'], $cookies);
     }
 
     public function testOtherEqualSignsWillBeAddedToValueAndWillReturnValidArray()
@@ -187,11 +187,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'hello=world=test=php')
+            ['Cookie' => 'hello=world=test=php']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('hello' => 'world=test=php'), $cookies);
+        $this->assertEquals(['hello' => 'world=test=php'], $cookies);
     }
 
     public function testSingleCookieValueInCookiesReturnsEmptyArray()
@@ -199,11 +199,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'world')
+            ['Cookie' => 'world']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array(), $cookies);
+        $this->assertEquals([], $cookies);
     }
 
     public function testSingleMutlipleCookieValuesReturnsEmptyArray()
@@ -211,11 +211,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'world; test')
+            ['Cookie' => 'world; test']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array(), $cookies);
+        $this->assertEquals([], $cookies);
     }
 
     public function testSingleValueIsValidInMultipleValueCookieWillReturnValidArray()
@@ -223,11 +223,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'world; test=php')
+            ['Cookie' => 'world; test=php']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('test' => 'php'), $cookies);
+        $this->assertEquals(['test' => 'php'], $cookies);
     }
 
     public function testUrlEncodingForValueWillReturnValidArray()
@@ -235,11 +235,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'hello=world%21; test=100%25%20coverage')
+            ['Cookie' => 'hello=world%21; test=100%25%20coverage']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('hello' => 'world!', 'test' => '100% coverage'), $cookies);
+        $this->assertEquals(['hello' => 'world!', 'test' => '100% coverage'], $cookies);
     }
 
     public function testUrlEncodingForKeyWillReturnValidArray()
@@ -247,11 +247,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'react%3Bphp=is%20great')
+            ['Cookie' => 'react%3Bphp=is%20great']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('react%3Bphp' => 'is great'), $cookies);
+        $this->assertEquals(['react%3Bphp' => 'is great'], $cookies);
     }
 
     public function testCookieWithoutSpaceAfterSeparatorWillBeAccepted()
@@ -259,11 +259,11 @@ class ServerRequestTest extends TestCase
         $this->request = new ServerRequest(
             'GET',
             'http://localhost',
-            array('Cookie' => 'hello=world;react=php')
+            ['Cookie' => 'hello=world;react=php']
         );
 
         $cookies = $this->request->getCookieParams();
-        $this->assertEquals(array('hello' => 'world', 'react' => 'php'), $cookies);
+        $this->assertEquals(['hello' => 'world', 'react' => 'php'], $cookies);
     }
 
     public function testConstructWithStringRequestBodyReturnsStringBodyWithAutomaticSize()
@@ -271,7 +271,7 @@ class ServerRequestTest extends TestCase
         $request = new ServerRequest(
             'GET',
             'http://localhost',
-            array(),
+            [],
             'foo'
         );
 
@@ -285,7 +285,7 @@ class ServerRequestTest extends TestCase
         $request = new ServerRequest(
             'GET',
             'http://localhost',
-            array(),
+            [],
             $body = new HttpBodyStream(new ThroughStream(), 100)
         );
 
@@ -297,7 +297,7 @@ class ServerRequestTest extends TestCase
         $request = new ServerRequest(
             'GET',
             'http://localhost',
-            array(),
+            [],
             new ThroughStream()
         );
 
@@ -312,9 +312,9 @@ class ServerRequestTest extends TestCase
         $request = new ServerRequest(
             'GET',
             'http://localhost',
-            array(
+            [
                 'Content-Length' => 100
-            ),
+            ],
             new ThroughStream()
         );
 
@@ -329,9 +329,9 @@ class ServerRequestTest extends TestCase
         $request = new ServerRequest(
             'GET',
             'http://localhost',
-            array(
+            [
                 'Transfer-Encoding' => 'Chunked'
-            ),
+            ],
             new ThroughStream()
         );
 
@@ -347,7 +347,7 @@ class ServerRequestTest extends TestCase
         new ServerRequest(
             'GET',
             'http://localhost',
-            array(),
+            [],
             1.0
         );
     }
@@ -358,14 +358,14 @@ class ServerRequestTest extends TestCase
         new ServerRequest(
             'GET',
             'http://localhost',
-            array(),
+            [],
             tmpfile()
         );
     }
 
     public function testParseMessageWithSimpleGetRequest()
     {
-        $request = ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: example.com\r\n", array());
+        $request = ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: example.com\r\n", []);
 
         $this->assertEquals('GET', $request->getMethod());
         $this->assertEquals('http://example.com/', (string) $request->getUri());
@@ -374,7 +374,7 @@ class ServerRequestTest extends TestCase
 
     public function testParseMessageWithHttp10RequestWithoutHost()
     {
-        $request = ServerRequest::parseMessage("GET / HTTP/1.0\r\n", array());
+        $request = ServerRequest::parseMessage("GET / HTTP/1.0\r\n", []);
 
         $this->assertEquals('GET', $request->getMethod());
         $this->assertEquals('http://127.0.0.1/', (string) $request->getUri());
@@ -383,7 +383,7 @@ class ServerRequestTest extends TestCase
 
     public function testParseMessageWithOptionsMethodWithAsteriskFormRequestTarget()
     {
-        $request = ServerRequest::parseMessage("OPTIONS * HTTP/1.1\r\nHost: example.com\r\n", array());
+        $request = ServerRequest::parseMessage("OPTIONS * HTTP/1.1\r\nHost: example.com\r\n", []);
 
         $this->assertEquals('OPTIONS', $request->getMethod());
         $this->assertEquals('*', $request->getRequestTarget());
@@ -393,7 +393,7 @@ class ServerRequestTest extends TestCase
 
     public function testParseMessageWithConnectMethodWithAuthorityFormRequestTarget()
     {
-        $request = ServerRequest::parseMessage("CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n", array());
+        $request = ServerRequest::parseMessage("CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n", []);
 
         $this->assertEquals('CONNECT', $request->getMethod());
         $this->assertEquals('example.com:80', $request->getRequestTarget());
@@ -404,84 +404,84 @@ class ServerRequestTest extends TestCase
     public function testParseMessageWithInvalidHttp11RequestWithoutHostThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\n", []);
     }
 
     public function testParseMessageWithInvalidHttpProtocolVersionThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.2\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.2\r\n", []);
     }
 
     public function testParseMessageWithInvalidProtocolThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / CUSTOM/1.1\r\n", array());
+        ServerRequest::parseMessage("GET / CUSTOM/1.1\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithoutValueThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderSyntaxThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: ///\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: ///\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithSchemeThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: http://localhost\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: http://localhost\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithQueryThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost?foo\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost?foo\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithFragmentThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost#foo\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost#foo\r\n", []);
     }
 
     public function testParseMessageWithInvalidContentLengthHeaderThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length:\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length:\r\n", []);
     }
 
     public function testParseMessageWithInvalidTransferEncodingHeaderThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:\r\n", []);
     }
 
     public function testParseMessageWithInvalidBothContentLengthHeaderAndTransferEncodingHeaderThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\nTransfer-Encoding: chunked\r\n", array());
+        ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\nTransfer-Encoding: chunked\r\n", []);
     }
 
     public function testParseMessageWithInvalidEmptyHostHeaderWithAbsoluteFormRequestTargetThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET http://example.com/ HTTP/1.1\r\nHost: \r\n", array());
+        ServerRequest::parseMessage("GET http://example.com/ HTTP/1.1\r\nHost: \r\n", []);
     }
 
     public function testParseMessageWithInvalidConnectMethodNotUsingAuthorityFormThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("CONNECT / HTTP/1.1\r\nHost: localhost\r\n", array());
+        ServerRequest::parseMessage("CONNECT / HTTP/1.1\r\nHost: localhost\r\n", []);
     }
 
     public function testParseMessageWithInvalidRequestTargetAsteriskFormThrows()
     {
         $this->setExpectedException('InvalidArgumentException');
-        ServerRequest::parseMessage("GET * HTTP/1.1\r\nHost: localhost\r\n", array());
+        ServerRequest::parseMessage("GET * HTTP/1.1\r\nHost: localhost\r\n", []);
     }
 }

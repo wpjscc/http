@@ -27,7 +27,7 @@ class CloseProtectionStreamTest extends TestCase
         $protection->on('error', $this->expectCallableOnce());
         $protection->on('close', $this->expectCallableNever());
 
-        $input->emit('error', array(new \RuntimeException()));
+        $input->emit('error', [new \RuntimeException()]);
 
         $this->assertTrue($protection->isReadable());
         $this->assertTrue($input->isReadable());
@@ -91,7 +91,7 @@ class CloseProtectionStreamTest extends TestCase
 
         $protection->close();
 
-        $input->emit('data', array('hello'));
+        $input->emit('data', ['hello']);
 
         $this->assertFalse($protection->isReadable());
         $this->assertTrue($input->isReadable());
@@ -108,7 +108,7 @@ class CloseProtectionStreamTest extends TestCase
 
         $protection->close();
 
-        $input->emit('error', array(new \Exception()));
+        $input->emit('error', [new \Exception()]);
 
         $this->assertFalse($protection->isReadable());
         $this->assertTrue($input->isReadable());
@@ -124,7 +124,7 @@ class CloseProtectionStreamTest extends TestCase
 
         $protection->close();
 
-        $input->emit('end', array());
+        $input->emit('end', []);
 
         $this->assertFalse($protection->isReadable());
         $this->assertTrue($input->isReadable());

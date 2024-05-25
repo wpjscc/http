@@ -11,6 +11,7 @@ use React\Http\Message\ServerRequest;
 use React\Http\Middleware\RequestBodyBufferMiddleware;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
+use function React\Async\await;
 
 final class RequestBodyBufferMiddlewareTest extends TestCase
 {
@@ -20,7 +21,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 11)
         );
 
@@ -49,7 +50,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             $stream
         );
 
@@ -72,7 +73,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             $body = new HttpBodyStream($stream, 0)
         );
 
@@ -95,7 +96,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             ''
         );
         $body = $serverRequest->getBody();
@@ -122,7 +123,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 2)
         );
 
@@ -145,7 +146,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 2)
         );
 
@@ -154,13 +155,13 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $promise = $buffer(
             $serverRequest,
             function (ServerRequestInterface $request) {
-                return new Response(200, array(), $request->getBody()->getContents());
+                return new Response(200, [], $request->getBody()->getContents());
             }
         );
 
         $stream->end('aa');
 
-        $response = \React\Async\await($promise);
+        $response = await($promise);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('', $response->getBody()->getContents());
@@ -175,15 +176,15 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 2048)
         );
 
         $buffer = new RequestBodyBufferMiddleware('1K');
-        $response = \React\Async\await($buffer(
+        $response = await($buffer(
             $serverRequest,
             function (ServerRequestInterface $request) {
-                return new Response(200, array(), $request->getBody()->getContents());
+                return new Response(200, [], $request->getBody()->getContents());
             }
         ));
 
@@ -196,7 +197,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -219,7 +220,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, null)
         );
 
@@ -227,13 +228,13 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $promise = $buffer(
             $serverRequest,
             function (ServerRequestInterface $request) {
-                return new Response(200, array(), $request->getBody()->getContents());
+                return new Response(200, [], $request->getBody()->getContents());
             }
         );
 
         $stream->end('aa');
 
-        $exposedResponse = \React\Async\await($promise->then(
+        $exposedResponse = await($promise->then(
             null,
             $this->expectCallableNever()
         ));
@@ -249,7 +250,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, null)
         );
 
@@ -284,7 +285,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, null)
         );
 
@@ -321,7 +322,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, null)
         );
 
@@ -355,7 +356,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, null)
         );
 
@@ -381,7 +382,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $serverRequest = new ServerRequest(
             'GET',
             'https://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 2)
         );
 

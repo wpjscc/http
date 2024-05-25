@@ -22,8 +22,8 @@ class HttpBodyStreamTest extends TestCase
 
     public function testDataEmit()
     {
-        $this->bodyStream->on('data', $this->expectCallableOnce(array("hello")));
-        $this->input->emit('data', array("hello"));
+        $this->bodyStream->on('data', $this->expectCallableOnce(["hello"]));
+        $this->input->emit('data', ["hello"]);
     }
 
     public function testPauseStream()
@@ -58,7 +58,7 @@ class HttpBodyStreamTest extends TestCase
         $this->bodyStream->on('close', $this->expectCallableOnce());
 
         $this->input->close();
-        $this->input->emit('end', array());
+        $this->input->emit('end', []);
 
         $this->assertFalse($this->bodyStream->isReadable());
     }
@@ -67,11 +67,11 @@ class HttpBodyStreamTest extends TestCase
     {
         $bodyStream = new HttpBodyStream($this->input, null);
         $bodyStream->on('close', $this->expectCallableOnce());
-        $this->bodyStream->on('data', $this->expectCallableOnce(array("hello")));
+        $this->bodyStream->on('data', $this->expectCallableOnce(["hello"]));
 
-        $this->input->emit('data', array("hello"));
+        $this->input->emit('data', ["hello"]);
         $bodyStream->close();
-        $this->input->emit('data', array("world"));
+        $this->input->emit('data', ["world"]);
     }
 
     public function testHandleError()
@@ -79,7 +79,7 @@ class HttpBodyStreamTest extends TestCase
         $this->bodyStream->on('error', $this->expectCallableOnce());
         $this->bodyStream->on('close', $this->expectCallableOnce());
 
-        $this->input->emit('error', array(new \RuntimeException()));
+        $this->input->emit('error', [new \RuntimeException()]);
 
         $this->assertFalse($this->bodyStream->isReadable());
     }

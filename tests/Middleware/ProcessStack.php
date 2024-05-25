@@ -3,7 +3,7 @@
 namespace React\Tests\Http\Middleware;
 
 use Psr\Http\Message\ServerRequestInterface;
-use React\Promise;
+use function React\Promise\resolve;
 
 final class ProcessStack
 {
@@ -15,7 +15,7 @@ final class ProcessStack
     public function __invoke(ServerRequestInterface $request, $stack)
     {
         $this->callCount++;
-        return Promise\resolve($stack($request));
+        return resolve($stack($request));
     }
 
     /**

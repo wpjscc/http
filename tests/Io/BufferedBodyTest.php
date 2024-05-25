@@ -288,7 +288,7 @@ class BufferedBodyTest extends TestCase
     {
         $stream = new BufferedBody('hello');
 
-        $this->assertEquals(array(), $stream->getMetadata());
+        $this->assertEquals([], $stream->getMetadata());
     }
 
     public function testGetMetadataWithKeyReturnsNull()

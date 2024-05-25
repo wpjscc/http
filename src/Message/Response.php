@@ -16,9 +16,9 @@ use React\Stream\ReadableStreamInterface;
  * ```php
  * $response = new React\Http\Message\Response(
  *     React\Http\Message\Response::STATUS_OK,
- *     array(
+ *     [
  *         'Content-Type' => 'text/html'
- *     ),
+ *     ],
  *     "<html>Hello world!</html>\n"
  * );
  * ```
@@ -90,7 +90,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      */
     public static function html($html)
     {
-        return new self(self::STATUS_OK, array('Content-Type' => 'text/html; charset=utf-8'), $html);
+        return new self(self::STATUS_OK, ['Content-Type' => 'text/html; charset=utf-8'], $html);
     }
 
     /**
@@ -124,10 +124,9 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      * fails, this method will throw an `InvalidArgumentException`.
      *
      * By default, the given structured data will be encoded with the flags as
-     * shown above. This includes pretty printing (PHP 5.4+) and preserving
-     * zero fractions for `float` values (PHP 5.6.6+) to ease debugging. It is
-     * assumed any additional data overhead is usually compensated by using HTTP
-     * response compression.
+     * shown above. This includes pretty printing and preserving zero fractions
+     * for `float` values to ease debugging. It is assumed any additional data
+     * overhead is usually compensated by using HTTP response compression.
      *
      * If you want to use a different status code or custom HTTP response
      * headers, you can manipulate the returned response object using the
@@ -146,19 +145,19 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      */
     public static function json($data)
     {
-        $json = @\json_encode(
+        $json = \json_encode(
             $data,
-            (\defined('JSON_PRETTY_PRINT') ? \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE : 0) | (\defined('JSON_PRESERVE_ZERO_FRACTION') ? \JSON_PRESERVE_ZERO_FRACTION : 0)
+            \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION
         );
 
         if ($json === false) {
             throw new \InvalidArgumentException(
-                'Unable to encode given data as JSON' . (\function_exists('json_last_error_msg') ? ': ' . \json_last_error_msg() : ''),
+                'Unable to encode given data as JSON: ' . \json_last_error_msg(),
                 \json_last_error()
             );
         }
 
-        return new self(self::STATUS_OK, array('Content-Type' => 'application/json'), $json . "\n");
+        return new self(self::STATUS_OK, ['Content-Type' => 'application/json'], $json . "\n");
     }
 
     /**
@@ -201,7 +200,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      */
     public static function plaintext($text)
     {
-        return new self(self::STATUS_OK, array('Content-Type' => 'text/plain; charset=utf-8'), $text);
+        return new self(self::STATUS_OK, ['Content-Type' => 'text/plain; charset=utf-8'], $text);
     }
 
     /**
@@ -253,7 +252,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      */
     public static function xml($xml)
     {
-        return new self(self::STATUS_OK, array('Content-Type' => 'application/xml'), $xml);
+        return new self(self::STATUS_OK, ['Content-Type' => 'application/xml'], $xml);
     }
 
     /**
@@ -275,7 +274,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      * @see self::STATUS_*
      * @see self::getReasonPhraseForStatusCode()
      */
-    private static $phrasesMap = array(
+    private static $phrasesMap = [
         200 => 'OK',
         203 => 'Non-Authoritative Information',
         207 => 'Multi-Status',
@@ -283,7 +282,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
         414 => 'URI Too Large',
         418 => 'I\'m a teapot',
         505 => 'HTTP Version Not Supported'
-    );
+    ];
 
     /** @var int */
     private $statusCode;
@@ -301,7 +300,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      */
     public function __construct(
         $status = self::STATUS_OK,
-        array $headers = array(),
+        array $headers = [],
         $body = '',
         $version = '1.1',
         $reason = null
@@ -366,7 +365,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
             }
         }
 
-        return isset(self::$phrasesMap[$code]) ? self::$phrasesMap[$code] : '';
+        return self::$phrasesMap[$code] ?? '';
     }
 
     /**
@@ -379,7 +378,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
      */
     public static function parseMessage($message)
     {
-        $start = array();
+        $start = [];
         if (!\preg_match('#^HTTP/(?<version>\d\.\d) (?<status>\d{3})(?: (?<reason>[^\r\n]*+))?[\r]?+\n#m', $message, $start)) {
             throw new \InvalidArgumentException('Unable to parse invalid status-line');
         }
@@ -390,14 +389,14 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
         }
 
         // check number of valid header fields matches number of lines + status line
-        $matches = array();
+        $matches = [];
         $n = \preg_match_all(self::REGEX_HEADERS, $message, $matches, \PREG_SET_ORDER);
         if (\substr_count($message, "\n") !== $n + 1) {
             throw new \InvalidArgumentException('Unable to parse invalid response header fields');
         }
 
         // format all header fields into associative array
-        $headers = array();
+        $headers = [];
         foreach ($matches as $match) {
             $headers[$match[1]][] = $match[2];
         }
@@ -407,7 +406,7 @@ final class Response extends AbstractMessage implements ResponseInterface, Statu
             $headers,
             '',
             $start['version'],
-            isset($start['reason']) ? $start['reason'] : ''
+            $start['reason'] ?? ''
         );
     }
 }

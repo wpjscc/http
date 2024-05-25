@@ -33,95 +33,95 @@ class UriTest extends TestCase
 
     public static function provideValidUris()
     {
-        return array(
-            array(
+        return [
+            [
                 'http://localhost'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost:8080/'
-            ),
-            array(
+            ],
+            [
                 'http://127.0.0.1/'
-            ),
-            array(
+            ],
+            [
                 'http://[::1]:8080/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/sub/path'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/with%20space'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/with%2fslash'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name=Alice'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name=John+Doe'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name=John%20Doe'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name=Alice&age=42'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name=Alice&'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?choice=A%26B'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?safe=Yes!?'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?alias=@home'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?assign:=true'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name='
-            ),
-            array(
+            ],
+            [
                 'http://localhost/?name'
-            ),
-            array(
+            ],
+            [
                 ''
-            ),
-            array(
+            ],
+            [
                 '/'
-            ),
-            array(
+            ],
+            [
                 '/path'
-            ),
-            array(
+            ],
+            [
                 'path'
-            ),
-            array(
+            ],
+            [
                 'http://user@localhost/'
-            ),
-            array(
+            ],
+            [
                 'http://user:@localhost/'
-            ),
-            array(
+            ],
+            [
                 'http://:pass@localhost/'
-            ),
-            array(
+            ],
+            [
                 'http://user:pass@localhost/path?query#fragment'
-            ),
-            array(
+            ],
+            [
                 'http://user%20name:pass%20word@localhost/path%20name?query%20name#frag%20ment'
-            )
-        );
+            ]
+        ];
     }
 
     /**
@@ -137,36 +137,36 @@ class UriTest extends TestCase
 
     public static function provideValidUrisThatWillBeTransformed()
     {
-        return array(
-            array(
+        return [
+            [
                 'http://localhost:8080/?',
                 'http://localhost:8080/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost:8080/#',
                 'http://localhost:8080/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost:8080/?#',
                 'http://localhost:8080/'
-            ),
-            array(
+            ],
+            [
                 'http://@localhost:8080/',
                 'http://localhost:8080/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost:8080/?percent=50%',
                 'http://localhost:8080/?percent=50%25'
-            ),
-            array(
+            ],
+            [
                 'http://user name:pass word@localhost/path name?query name#frag ment',
                 'http://user%20name:pass%20word@localhost/path%20name?query%20name#frag%20ment'
-            ),
-            array(
+            ],
+            [
                 'HTTP://USER:PASS@LOCALHOST:8080/PATH?QUERY#FRAGMENT',
                 'http://USER:PASS@localhost:8080/PATH?QUERY#FRAGMENT'
-            )
-        );
+            ]
+        ];
     }
 
     /**
@@ -576,113 +576,113 @@ class UriTest extends TestCase
 
     public static function provideResolveUris()
     {
-        return array(
-            array(
+        return [
+            [
                 'http://localhost/',
                 '',
                 'http://localhost/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/',
                 'http://example.com/',
                 'http://example.com/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/',
                 'path',
                 'http://localhost/path'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/',
                 'path/',
                 'http://localhost/path/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/',
                 'path//',
                 'http://localhost/path/'
-            ),
-            array(
+            ],
+            [
                 'http://localhost',
                 'path',
                 'http://localhost/path'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/a/b',
                 '/path',
                 'http://localhost/path'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/',
                 '/a/b/c',
                 'http://localhost/a/b/c'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/a/path',
                 'b/c',
                 'http://localhost/a/b/c'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/a/path',
                 '/b/c',
                 'http://localhost/b/c'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/a/path/',
                 'b/c',
                 'http://localhost/a/path/b/c'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/a/path/',
                 '../b/c',
                 'http://localhost/a/b/c'
-            ),
-            array(
+            ],
+            [
                 'http://localhost',
                 '../../../a/b',
                 'http://localhost/a/b'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 '?query',
                 'http://localhost/path?query'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 '#fragment',
                 'http://localhost/path#fragment'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 'http://localhost',
                 'http://localhost'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 'http://localhost/?query#fragment',
                 'http://localhost/?query#fragment'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path/?a#fragment',
                 '?b',
                 'http://localhost/path/?b'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 '//localhost',
                 'http://localhost'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 '//localhost/a?query',
                 'http://localhost/a?query'
-            ),
-            array(
+            ],
+            [
                 'http://localhost/path',
                 '//LOCALHOST',
                 'http://localhost'
-            )
-        );
+            ]
+        ];
     }
 
     /**

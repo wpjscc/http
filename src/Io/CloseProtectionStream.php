@@ -28,10 +28,10 @@ class CloseProtectionStream extends EventEmitter implements ReadableStreamInterf
     {
         $this->input = $input;
 
-        $this->input->on('data', array($this, 'handleData'));
-        $this->input->on('end', array($this, 'handleEnd'));
-        $this->input->on('error', array($this, 'handleError'));
-        $this->input->on('close', array($this, 'close'));
+        $this->input->on('data', [$this, 'handleData']);
+        $this->input->on('end', [$this, 'handleEnd']);
+        $this->input->on('error', [$this, 'handleError']);
+        $this->input->on('close', [$this, 'close']);
     }
 
     public function isReadable()
@@ -59,7 +59,7 @@ class CloseProtectionStream extends EventEmitter implements ReadableStreamInterf
         $this->input->resume();
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = array())
+    public function pipe(WritableStreamInterface $dest, array $options = [])
     {
         Util::pipe($this, $dest, $options);
 
@@ -75,10 +75,10 @@ class CloseProtectionStream extends EventEmitter implements ReadableStreamInterf
          $this->closed = true;
 
          // stop listening for incoming events
-         $this->input->removeListener('data', array($this, 'handleData'));
-         $this->input->removeListener('error', array($this, 'handleError'));
-         $this->input->removeListener('end', array($this, 'handleEnd'));
-         $this->input->removeListener('close', array($this, 'close'));
+         $this->input->removeListener('data', [$this, 'handleData']);
+         $this->input->removeListener('error', [$this, 'handleError']);
+         $this->input->removeListener('end', [$this, 'handleEnd']);
+         $this->input->removeListener('close', [$this, 'close']);
 
          // resume the stream to ensure we discard everything from incoming connection
          if ($this->paused) {
@@ -93,7 +93,7 @@ class CloseProtectionStream extends EventEmitter implements ReadableStreamInterf
      /** @internal */
      public function handleData($data)
      {
-        $this->emit('data', array($data));
+        $this->emit('data', [$data]);
      }
 
      /** @internal */
@@ -106,6 +106,6 @@ class CloseProtectionStream extends EventEmitter implements ReadableStreamInterf
      /** @internal */
      public function handleError(\Exception $e)
      {
-         $this->emit('error', array($e));
+         $this->emit('error', [$e]);
      }
 }

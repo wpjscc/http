@@ -24,7 +24,7 @@ class LengthLimitedStreamTest extends TestCase
         $stream = new LengthLimitedStream($this->input, 5);
         $stream->on('data', $this->expectCallableOnceWith('hello'));
         $stream->on('end', $this->expectCallableOnce());
-        $this->input->emit('data', array("hello world"));
+        $this->input->emit('data', ["hello world"]);
     }
 
     public function testInputStreamKeepsEmitting()
@@ -33,9 +33,9 @@ class LengthLimitedStreamTest extends TestCase
         $stream->on('data', $this->expectCallableOnceWith('hello'));
         $stream->on('end', $this->expectCallableOnce());
 
-        $this->input->emit('data', array("hello world"));
-        $this->input->emit('data', array("world"));
-        $this->input->emit('data', array("world"));
+        $this->input->emit('data', ["hello world"]);
+        $this->input->emit('data', ["world"]);
+        $this->input->emit('data', ["world"]);
     }
 
     public function testZeroLengthInContentLengthWillIgnoreEmittedDataEvents()
@@ -43,7 +43,7 @@ class LengthLimitedStreamTest extends TestCase
         $stream = new LengthLimitedStream($this->input, 0);
         $stream->on('data', $this->expectCallableNever());
         $stream->on('end', $this->expectCallableOnce());
-        $this->input->emit('data', array("hello world"));
+        $this->input->emit('data', ["hello world"]);
     }
 
     public function testHandleError()
@@ -52,7 +52,7 @@ class LengthLimitedStreamTest extends TestCase
         $stream->on('error', $this->expectCallableOnce());
         $stream->on('close', $this->expectCallableOnce());
 
-        $this->input->emit('error', array(new \RuntimeException()));
+        $this->input->emit('error', [new \RuntimeException()]);
 
         $this->assertFalse($stream->isReadable());
     }
@@ -92,7 +92,7 @@ class LengthLimitedStreamTest extends TestCase
         $stream->on('close', $this->expectCallableOnce());
 
         $this->input->close();
-        $this->input->emit('end', array());
+        $this->input->emit('end', []);
 
         $this->assertFalse($stream->isReadable());
     }

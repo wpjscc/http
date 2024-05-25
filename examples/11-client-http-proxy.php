@@ -16,10 +16,10 @@ require __DIR__ . '/../vendor/autoload.php';
 $proxy = new Clue\React\HttpProxy\ProxyConnector(getenv('http_proxy') ?: '127.0.0.1:8080');
 
 // create a Browser object that uses the HTTP CONNECT proxy client for connections
-$connector = new Connector(array(
+$connector = new Connector([
     'tcp' => $proxy,
     'dns' => false
-));
+]);
 
 $browser = new Browser($connector);
 

@@ -74,38 +74,32 @@ class ClientRequestStream extends EventEmitter implements WritableStreamInterfac
             return;
         }
 
-        $connectionRef = &$this->connection;
-        $stateRef = &$this->state;
-        $pendingWrites = &$this->pendingWrites;
-        $that = $this;
-
         $promise = $this->connectionManager->connect($this->request->getUri());
         $promise->then(
-            function (ConnectionInterface $connection) use ($headers, &$connectionRef, &$stateRef, &$pendingWrites, $that) {
-                $connectionRef = $connection;
-                assert($connectionRef instanceof ConnectionInterface);
+            function (ConnectionInterface $connection) use ($headers) {
+                $this->connection = $connection;
 
-                $connection->on('drain', array($that, 'handleDrain'));
-                $connection->on('data', array($that, 'handleData'));
-                $connection->on('end', array($that, 'handleEnd'));
-                $connection->on('error', array($that, 'handleError'));
-                $connection->on('close', array($that, 'close'));
+                $connection->on('drain', [$this, 'handleDrain']);
+                $connection->on('data', [$this, 'handleData']);
+                $connection->on('end', [$this, 'handleEnd']);
+                $connection->on('error', [$this, 'handleError']);
+                $connection->on('close', [$this, 'close']);
 
-                $more = $connection->write($headers . "\r\n" . $pendingWrites);
+                $more = $connection->write($headers . "\r\n" . $this->pendingWrites);
 
-                assert($stateRef === ClientRequestStream::STATE_WRITING_HEAD);
-                $stateRef = ClientRequestStream::STATE_HEAD_WRITTEN;
+                assert($this->state === ClientRequestStream::STATE_WRITING_HEAD);
+                $this->state = ClientRequestStream::STATE_HEAD_WRITTEN;
 
                 // clear pending writes if non-empty
-                if ($pendingWrites !== '') {
-                    $pendingWrites = '';
+                if ($this->pendingWrites !== '') {
+                    $this->pendingWrites = '';
 
                     if ($more) {
-                        $that->emit('drain');
+                        $this->emit('drain');
                     }
                 }
             },
-            array($this, 'closeError')
+            [$this, 'closeError']
         );
 
         $this->on('close', function() use ($promise) {
@@ -179,29 +173,26 @@ class ClientRequestStream extends EventEmitter implements WritableStreamInterfac
             // response headers successfully received => remove listeners for connection events
             $connection = $this->connection;
             assert($connection instanceof ConnectionInterface);
-            $connection->removeListener('drain', array($this, 'handleDrain'));
-            $connection->removeListener('data', array($this, 'handleData'));
-            $connection->removeListener('end', array($this, 'handleEnd'));
-            $connection->removeListener('error', array($this, 'handleError'));
-            $connection->removeListener('close', array($this, 'close'));
+            $connection->removeListener('drain', [$this, 'handleDrain']);
+            $connection->removeListener('data', [$this, 'handleData']);
+            $connection->removeListener('end', [$this, 'handleEnd']);
+            $connection->removeListener('error', [$this, 'handleError']);
+            $connection->removeListener('close', [$this, 'close']);
             $this->connection = null;
             $this->buffer = '';
 
             // take control over connection handling and check if we can reuse the connection once response body closes
-            $that = $this;
-            $request = $this->request;
-            $connectionManager = $this->connectionManager;
             $successfulEndReceived = false;
             $input = $body = new CloseProtectionStream($connection);
-            $input->on('close', function () use ($connection, $that, $connectionManager, $request, $response, &$successfulEndReceived) {
+            $input->on('close', function () use ($connection, $response, &$successfulEndReceived) {
                 // only reuse connection after successful response and both request and response allow keep alive
-                if ($successfulEndReceived && $connection->isReadable() && $that->hasMessageKeepAliveEnabled($response) && $that->hasMessageKeepAliveEnabled($request)) {
-                    $connectionManager->keepAlive($request->getUri(), $connection);
+                if ($successfulEndReceived && $connection->isReadable() && $this->hasMessageKeepAliveEnabled($response) && $this->hasMessageKeepAliveEnabled($this->request)) {
+                    $this->connectionManager->keepAlive($this->request->getUri(), $connection);
                 } else {
                     $connection->close();
                 }
 
-                $that->close();
+                $this->close();
             });
 
             // determine length of response body
@@ -220,7 +211,7 @@ class ClientRequestStream extends EventEmitter implements WritableStreamInterfac
             });
 
             // emit response with streaming response body (see `Sender`)
-            $this->emit('response', array($response, $body));
+            $this->emit('response', [$response, $body]);
 
             // re-emit HTTP response body to trigger body parsing if parts of it are buffered
             if ($bodyChunk !== '') {
@@ -255,7 +246,7 @@ class ClientRequestStream extends EventEmitter implements WritableStreamInterfac
         if (self::STATE_END <= $this->state) {
             return;
         }
-        $this->emit('error', array($error));
+        $this->emit('error', [$error]);
         $this->close();
     }
 

@@ -9,40 +9,40 @@ class IniUtilTest extends TestCase
 {
     public function provideIniSizes()
     {
-        return array(
-            array(
+        return [
+            [
                 '1',
                 1,
-            ),
-            array(
+            ],
+            [
                 '10',
                 10,
-            ),
-            array(
+            ],
+            [
                 '1024',
                 1024,
-            ),
-            array(
+            ],
+            [
                 '1K',
                 1024,
-            ),
-            array(
+            ],
+            [
                 '1.5M',
                 1572864,
-            ),
-            array(
+            ],
+            [
                 '64M',
                 67108864,
-            ),
-            array(
+            ],
+            [
                 '8G',
                 8589934592,
-            ),
-            array(
+            ],
+            [
                 '1T',
                 1099511627776,
-            ),
-        );
+            ],
+        ];
     }
 
     /**
@@ -60,14 +60,14 @@ class IniUtilTest extends TestCase
 
     public function provideInvalidInputIniSizeToBytes()
     {
-        return array(
-            array('-1G'),
-            array('0G'),
-            array('foo'),
-            array('fooK'),
-            array('1ooL'),
-            array('1ooL'),
-        );
+        return [
+            ['-1G'],
+            ['0G'],
+            ['foo'],
+            ['fooK'],
+            ['1ooL'],
+            ['1ooL'],
+        ];
     }
 
     /**

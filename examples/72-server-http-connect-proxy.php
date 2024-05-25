@@ -20,10 +20,10 @@ $http = new React\Http\HttpServer(function (ServerRequestInterface $request) use
     if ($request->getMethod() !== 'CONNECT') {
         return new Response(
             Response::STATUS_METHOD_NOT_ALLOWED,
-            array(
+            [
                 'Content-Type' => 'text/plain',
                 'Allow' => 'CONNECT'
-            ),
+            ],
             'This is an HTTP CONNECT (secure HTTPS) proxy'
         );
     }
@@ -34,23 +34,23 @@ $http = new React\Http\HttpServer(function (ServerRequestInterface $request) use
             // connection established => forward data
             return new Response(
                 Response::STATUS_OK,
-                array(),
+                [],
                 $remote
             );
         },
         function (Exception $e) {
             return new Response(
                 Response::STATUS_BAD_GATEWAY,
-                array(
+                [
                     'Content-Type' => 'text/plain'
-                ),
+                ],
                 'Unable to connect: ' . $e->getMessage()
             );
         }
     );
 });
 
-$socket = new React\Socket\SocketServer(isset($argv[1]) ? $argv[1] : '0.0.0.0:0');
+$socket = new React\Socket\SocketServer($argv[1] ?? '0.0.0.0:0');
 $http->listen($socket);
 
 echo 'Listening on ' . str_replace('tcp:', 'http:', $socket->getAddress()) . PHP_EOL;

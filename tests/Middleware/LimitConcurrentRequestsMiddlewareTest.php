@@ -163,7 +163,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $body->expects($this->never())->method('pause');
         $body->expects($this->never())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
-        $limitHandlers(new ServerRequest('GET', 'https://example.com/', array(), $body), function () {});
+        $limitHandlers(new ServerRequest('GET', 'https://example.com/', [], $body), function () {});
     }
 
     public function testStreamDoesPauseWhenAboveLimit()
@@ -177,7 +177,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
             return new Promise(function () { });
         });
 
-        $limitHandlers(new ServerRequest('GET', 'https://example.com/', array(), $body), function () {});
+        $limitHandlers(new ServerRequest('GET', 'https://example.com/', [], $body), function () {});
     }
 
     public function testStreamDoesPauseAndThenResumeWhenDequeued()
@@ -195,7 +195,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         assert($promise instanceof PromiseInterface);
         $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
-        $limitHandlers(new ServerRequest('GET', 'https://example.com/', array(), $body), function () {});
+        $limitHandlers(new ServerRequest('GET', 'https://example.com/', [], $body), function () {});
 
         $deferred->reject(new \RuntimeException());
     }
@@ -205,7 +205,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -224,7 +224,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 5)
         );
 
@@ -246,7 +246,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -261,7 +261,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -280,7 +280,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -303,7 +303,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -331,7 +331,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -354,7 +354,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -376,7 +376,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -400,7 +400,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -422,7 +422,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
             );
 
@@ -445,7 +445,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 5)
         );
 
@@ -494,7 +494,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 
@@ -524,7 +524,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 
@@ -555,7 +555,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 
@@ -586,7 +586,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 

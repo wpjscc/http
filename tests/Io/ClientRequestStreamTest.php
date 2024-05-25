@@ -12,6 +12,8 @@ use React\Promise\Promise;
 use React\Stream\DuplexResourceStream;
 use React\Stream\ReadableStreamInterface;
 use React\Tests\Http\TestCase;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 class ClientRequestStreamTest extends TestCase
 {
@@ -22,25 +24,25 @@ class ClientRequestStreamTest extends TestCase
 
         $uri = new Uri('http://www.example.com');
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->with($uri)->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->with($uri)->willReturn(resolve($connection));
 
         $requestData = new Request('GET', $uri);
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $connection->expects($this->atLeast(5))->method('on')->withConsecutive(
-            array('drain', $this->identicalTo(array($request, 'handleDrain'))),
-            array('data', $this->identicalTo(array($request, 'handleData'))),
-            array('end', $this->identicalTo(array($request, 'handleEnd'))),
-            array('error', $this->identicalTo(array($request, 'handleError'))),
-            array('close', $this->identicalTo(array($request, 'close')))
+            ['drain', $this->identicalTo([$request, 'handleDrain'])],
+            ['data', $this->identicalTo([$request, 'handleData'])],
+            ['end', $this->identicalTo([$request, 'handleEnd'])],
+            ['error', $this->identicalTo([$request, 'handleError'])],
+            ['close', $this->identicalTo([$request, 'close'])]
         );
 
         $connection->expects($this->exactly(5))->method('removeListener')->withConsecutive(
-            array('drain', $this->identicalTo(array($request, 'handleDrain'))),
-            array('data', $this->identicalTo(array($request, 'handleData'))),
-            array('end', $this->identicalTo(array($request, 'handleEnd'))),
-            array('error', $this->identicalTo(array($request, 'handleError'))),
-            array('close', $this->identicalTo(array($request, 'close')))
+            ['drain', $this->identicalTo([$request, 'handleDrain'])],
+            ['data', $this->identicalTo([$request, 'handleData'])],
+            ['end', $this->identicalTo([$request, 'handleEnd'])],
+            ['error', $this->identicalTo([$request, 'handleError'])],
+            ['close', $this->identicalTo([$request, 'close'])]
         );
 
         $request->end();
@@ -54,7 +56,7 @@ class ClientRequestStreamTest extends TestCase
     public function requestShouldEmitErrorIfConnectionFails()
     {
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\reject(new \RuntimeException()));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(reject(new \RuntimeException()));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -71,7 +73,7 @@ class ClientRequestStreamTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -89,7 +91,7 @@ class ClientRequestStreamTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -105,44 +107,44 @@ class ClientRequestStreamTest extends TestCase
     {
         $request = new Request('GET' , "http://localhost/");
 
-        return array(
-            array(
+        return [
+            [
                 $request->withMethod("INVA\r\nLID", '')
-            ),
-            array(
+            ],
+            [
                 $request->withRequestTarget('/inva lid')
-            ),
-            array(
+            ],
+            [
                 $request->withHeader('Invalid', "Yes\r\n")
-            ),
-            array(
+            ],
+            [
                 $request->withHeader('Invalid', "Yes\n")
-            ),
-            array(
+            ],
+            [
                 $request->withHeader('Invalid', "Yes\r")
-            ),
-            array(
+            ],
+            [
                 $request->withHeader("Inva\r\nlid", 'Yes')
-            ),
-            array(
+            ],
+            [
                 $request->withHeader("Inva\nlid", 'Yes')
-            ),
-            array(
+            ],
+            [
                 $request->withHeader("Inva\rlid", 'Yes')
-            ),
-            array(
+            ],
+            [
                 $request->withHeader('Inva Lid', 'Yes')
-            ),
-            array(
+            ],
+            [
                 $request->withHeader('Inva:Lid', 'Yes')
-            ),
-            array(
+            ],
+            [
                 $request->withHeader('Invalid', "Val\0ue")
-            ),
-            array(
+            ],
+            [
                 $request->withHeader("Inva\0lid", 'Yes')
-            )
-        );
+            ]
+        ];
     }
 
     /**
@@ -168,7 +170,7 @@ class ClientRequestStreamTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -187,9 +189,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n");
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->end();
@@ -202,9 +204,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->end();
@@ -217,9 +219,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('write')->with("OPTIONS * HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('OPTIONS', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('OPTIONS', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $requestData = $requestData->withRequestTarget('*');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
@@ -233,16 +235,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableNever());
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableNever());
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -258,16 +259,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableNever());
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableNever());
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -283,16 +283,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableNever());
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableNever());
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -308,16 +307,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('HEAD', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('HEAD', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableNever());
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableNever());
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -333,16 +331,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableOnceWith('OK'));
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableOnceWith('OK'));
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -358,16 +355,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableNever());
-            $body->on('end', $that->expectCallableNever());
-            $body->on('close', $that->expectCallableNever());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableNever());
+            $body->on('end', $this->expectCallableNever());
+            $body->on('close', $this->expectCallableNever());
         });
         $request->on('close', $this->expectCallableNever());
 
@@ -383,16 +379,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableOnce('O'));
-            $body->on('end', $that->expectCallableNever());
-            $body->on('close', $that->expectCallableNever());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableOnce('O'));
+            $body->on('end', $this->expectCallableNever());
+            $body->on('close', $this->expectCallableNever());
         });
         $request->on('close', $this->expectCallableNever());
 
@@ -408,16 +403,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableOnceWith('OK'));
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableOnceWith('OK'));
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -433,16 +427,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableNever());
-            $body->on('end', $that->expectCallableNever());
-            $body->on('close', $that->expectCallableNever());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableNever());
+            $body->on('end', $this->expectCallableNever());
+            $body->on('close', $this->expectCallableNever());
         });
         $request->on('close', $this->expectCallableNever());
 
@@ -458,16 +451,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableOnceWith('O'));
-            $body->on('end', $that->expectCallableNever());
-            $body->on('close', $that->expectCallableNever());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableOnceWith('O'));
+            $body->on('end', $this->expectCallableNever());
+            $body->on('close', $this->expectCallableNever());
         });
         $request->on('close', $this->expectCallableNever());
 
@@ -483,16 +475,15 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableOnce('O'));
-            $body->on('end', $that->expectCallableNever());
-            $body->on('close', $that->expectCallableNever());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableOnce('O'));
+            $body->on('end', $this->expectCallableNever());
+            $body->on('close', $this->expectCallableNever());
         });
         $request->on('close', $this->expectCallableNever());
 
@@ -520,16 +511,15 @@ class ClientRequestStreamTest extends TestCase
         }));
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'close'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $that = $this;
-        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($that) {
-            $body->on('data', $that->expectCallableOnce('OK'));
-            $body->on('end', $that->expectCallableOnce());
-            $body->on('close', $that->expectCallableOnce());
+        $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) {
+            $body->on('data', $this->expectCallableOnce('OK'));
+            $body->on('end', $this->expectCallableOnce());
+            $body->on('close', $this->expectCallableOnce());
         });
         $request->on('close', $this->expectCallableOnce());
 
@@ -549,10 +539,10 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -570,9 +560,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -590,9 +580,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'FOO, CLOSE, BAR'), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'FOO, CLOSE, BAR'], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -610,9 +600,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -630,10 +620,10 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'keep-alive'), '', '1.0');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'keep-alive'], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -651,10 +641,10 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
-        $requestData = new Request('GET', 'http://www.example.com', array('Connection' => 'FOO, KEEP-ALIVE, BAR'), '', '1.0');
+        $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'FOO, KEEP-ALIVE, BAR'], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -684,9 +674,9 @@ class ClientRequestStreamTest extends TestCase
         }));
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -719,9 +709,9 @@ class ClientRequestStreamTest extends TestCase
         }));
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -742,10 +732,10 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->never())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -763,9 +753,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('GET', 'http://www.example.com', array(), '', '1.1');
+        $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->on('close', $this->expectCallableOnce());
@@ -782,9 +772,9 @@ class ClientRequestStreamTest extends TestCase
         $connection->expects($this->once())->method('write')->with($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome post data$#"));
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('POST', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->end('some post data');
@@ -799,15 +789,15 @@ class ClientRequestStreamTest extends TestCase
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->exactly(3))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")),
-            array($this->identicalTo("post")),
-            array($this->identicalTo("data"))
+            [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")],
+            [$this->identicalTo("post")],
+            [$this->identicalTo("data")]
         );
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('POST', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $request->write("some");
@@ -824,8 +814,8 @@ class ClientRequestStreamTest extends TestCase
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->exactly(2))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")),
-            array($this->identicalTo("data"))
+            [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")],
+            [$this->identicalTo("data")]
         )->willReturn(
             true
         );
@@ -834,7 +824,7 @@ class ClientRequestStreamTest extends TestCase
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
         $connectionManager->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
-        $requestData = new Request('POST', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $this->assertFalse($request->write("some"));
@@ -858,12 +848,12 @@ class ClientRequestStreamTest extends TestCase
     {
         $connection = $this->getMockBuilder('React\Socket\Connection')
             ->disableOriginalConstructor()
-            ->setMethods(array('write'))
+            ->setMethods(['write'])
             ->getMock();
 
         $connection->expects($this->exactly(2))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")),
-            array($this->identicalTo("data"))
+            [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")],
+            [$this->identicalTo("data")]
         )->willReturn(
             false
         );
@@ -872,7 +862,7 @@ class ClientRequestStreamTest extends TestCase
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
         $connectionManager->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
-        $requestData = new Request('POST', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $this->assertFalse($request->write("some"));
@@ -897,15 +887,15 @@ class ClientRequestStreamTest extends TestCase
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->exactly(3))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")),
-            array($this->identicalTo("post")),
-            array($this->identicalTo("data"))
+            [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")],
+            [$this->identicalTo("post")],
+            [$this->identicalTo("data")]
         );
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
-        $requestData = new Request('POST', 'http://www.example.com', array(), '', '1.0');
+        $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
         $loop = $this
@@ -916,9 +906,9 @@ class ClientRequestStreamTest extends TestCase
         $stream = new DuplexResourceStream($stream, $loop);
 
         $stream->pipe($request);
-        $stream->emit('data', array('some'));
-        $stream->emit('data', array('post'));
-        $stream->emit('data', array('data'));
+        $stream->emit('data', ['some']);
+        $stream->emit('data', ['post']);
+        $stream->emit('data', ['data']);
 
         $request->handleData("HTTP/1.0 200 OK\r\n");
         $request->handleData("Content-Type: text/plain\r\n");
@@ -1044,7 +1034,7 @@ class ClientRequestStreamTest extends TestCase
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
-        $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
+        $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);

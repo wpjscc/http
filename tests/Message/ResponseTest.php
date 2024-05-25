@@ -11,7 +11,7 @@ class ResponseTest extends TestCase
 {
     public function testConstructWithStringBodyWillReturnStreamInstance()
     {
-        $response = new Response(200, array(), 'hello');
+        $response = new Response(200, [], 'hello');
         $body = $response->getBody();
 
         /** @var \Psr\Http\Message\StreamInterface $body */
@@ -21,7 +21,7 @@ class ResponseTest extends TestCase
 
     public function testConstructWithStreamingBodyWillReturnReadableBodyStream()
     {
-        $response = new Response(200, array(), new ThroughStream());
+        $response = new Response(200, [], new ThroughStream());
         $body = $response->getBody();
 
         /** @var \Psr\Http\Message\StreamInterface $body */
@@ -35,7 +35,7 @@ class ResponseTest extends TestCase
     {
         $response = new Response(
             200,
-            array(),
+            [],
             $body = new HttpBodyStream(new ThroughStream(), 100)
         );
 
@@ -45,13 +45,13 @@ class ResponseTest extends TestCase
     public function testFloatBodyWillThrow()
     {
         $this->setExpectedException('InvalidArgumentException');
-        new Response(200, array(), 1.0);
+        new Response(200, [], 1.0);
     }
 
     public function testResourceBodyWillThrow()
     {
         $this->setExpectedException('InvalidArgumentException');
-        new Response(200, array(), tmpfile());
+        new Response(200, [], tmpfile());
     }
 
     public function testWithStatusReturnsNewInstanceWhenStatusIsChanged()
@@ -99,7 +99,7 @@ class ResponseTest extends TestCase
 
     public function testJsonMethodReturnsPrettyPrintedJsonResponse()
     {
-        $response = Response::json(array('text' => 'Hello wörld!'));
+        $response = Response::json(['text' => 'Hello wörld!']);
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
@@ -155,7 +155,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.1', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(array(), $response->getHeaders());
+        $this->assertEquals([], $response->getHeaders());
     }
 
     public function testParseMessageWithSimpleOkResponse()
@@ -165,7 +165,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.1', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(array('Server' => array('demo')), $response->getHeaders());
+        $this->assertEquals(['Server' => ['demo']], $response->getHeaders());
     }
 
     public function testParseMessageWithSimpleOkResponseWithCustomReasonPhrase()
@@ -175,7 +175,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.1', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('Mostly Okay', $response->getReasonPhrase());
-        $this->assertEquals(array('Server' => array('demo')), $response->getHeaders());
+        $this->assertEquals(['Server' => ['demo']], $response->getHeaders());
     }
 
     public function testParseMessageWithSimpleOkResponseWithEmptyReasonPhraseAppliesDefault()
@@ -185,7 +185,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.1', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(array('Server' => array('demo')), $response->getHeaders());
+        $this->assertEquals(['Server' => ['demo']], $response->getHeaders());
     }
 
     public function testParseMessageWithSimpleOkResponseWithoutReasonPhraseAndWhitespaceSeparatorAppliesDefault()
@@ -195,7 +195,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.1', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(array('Server' => array('demo')), $response->getHeaders());
+        $this->assertEquals(['Server' => ['demo']], $response->getHeaders());
     }
 
     public function testParseMessageWithHttp10SimpleOkResponse()
@@ -205,7 +205,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.0', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(array('Server' => array('demo')), $response->getHeaders());
+        $this->assertEquals(['Server' => ['demo']], $response->getHeaders());
     }
 
     public function testParseMessageWithHttp10SimpleOkResponseWithLegacyNewlines()
@@ -215,7 +215,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('1.0', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(array('Server' => array('demo')), $response->getHeaders());
+        $this->assertEquals(['Server' => ['demo']], $response->getHeaders());
     }
 
     public function testParseMessageWithInvalidHttpProtocolVersion12Throws()

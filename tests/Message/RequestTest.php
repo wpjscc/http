@@ -14,7 +14,7 @@ class RequestTest extends TestCase
         $request = new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             'foo'
         );
 
@@ -28,7 +28,7 @@ class RequestTest extends TestCase
         $request = new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             new ThroughStream()
         );
 
@@ -43,7 +43,7 @@ class RequestTest extends TestCase
         $request = new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             $body = new HttpBodyStream(new ThroughStream(), 100)
         );
 
@@ -56,7 +56,7 @@ class RequestTest extends TestCase
         new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             null
         );
     }

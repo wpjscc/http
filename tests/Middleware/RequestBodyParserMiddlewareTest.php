@@ -15,9 +15,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             'hello=world'
         );
 
@@ -30,7 +30,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array('hello' => 'world'),
+            ['hello' => 'world'],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame('hello=world', (string)$parsedRequest->getBody());
@@ -42,9 +42,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'CONTENT-TYPE' => 'APPLICATION/X-WWW-Form-URLEncoded',
-            ),
+            [
+                'CONTENT-TYPE' => 'APPLICATION/X-WWW-Form-URLEncoded'
+            ],
             'Hello=World'
         );
 
@@ -57,7 +57,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array('Hello' => 'World'),
+            ['Hello' => 'World'],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame('Hello=World', (string)$parsedRequest->getBody());
@@ -69,9 +69,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             'foo=bar&baz[]=cheese&bar[]=beer&bar[]=wine&market[fish]=salmon&market[meat][]=beef&market[meat][]=chicken&market[]=bazaar'
         );
 
@@ -84,24 +84,24 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array(
+            [
                 'foo' => 'bar',
-                'baz' => array(
+                'baz' => [
                     'cheese',
-                ),
-                'bar' => array(
+                ],
+                'bar' => [
                     'beer',
                     'wine',
-                ),
-                'market' => array(
+                ],
+                'market' => [
                     'fish' => 'salmon',
-                    'meat' => array(
+                    'meat' => [
                         'beef',
                         'chicken',
-                    ),
+                    ],
                     0 => 'bazaar',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame('foo=bar&baz[]=cheese&bar[]=beer&bar[]=wine&market[fish]=salmon&market[meat][]=beef&market[meat][]=chicken&market[]=bazaar', (string)$parsedRequest->getBody());
@@ -115,9 +115,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             'hello' . str_repeat('[]', $allowed + 1) . '=world'
         );
 
@@ -130,7 +130,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array(),
+            [],
             $parsedRequest->getParsedBody()
         );
     }
@@ -143,9 +143,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             str_repeat('a[]=b&', $allowed + 1)
         );
 
@@ -170,9 +170,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/json',
-            ),
+            [
+                'Content-Type' => 'application/json'
+            ],
             '{"hello":"world"}'
         );
 
@@ -204,9 +204,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $data .= "second\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(
@@ -217,12 +217,12 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     'one' => 'single',
                     'two' => 'second',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame($data, (string)$parsedRequest->getBody());
@@ -242,9 +242,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(
@@ -274,9 +274,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         }
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(
@@ -310,9 +310,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         }
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(

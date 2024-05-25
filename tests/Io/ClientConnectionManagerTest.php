@@ -7,6 +7,7 @@ use React\Http\Message\Uri;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use React\Tests\Http\TestCase;
+use function React\Promise\resolve;
 
 class ClientConnectionManagerTest extends TestCase
 {
@@ -100,51 +101,51 @@ class ClientConnectionManagerTest extends TestCase
 
         $streamHandler = null;
         $connectionToReuse->expects($this->exactly(3))->method('on')->withConsecutive(
-            array(
+            [
                 'close',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     $streamHandler = $cb;
                     return true;
                 })
-            ),
-            array(
+            ],
+            [
                 'data',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            ),
-            array(
+            ],
+            [
                 'error',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            )
+            ]
         );
 
         $connectionToReuse->expects($this->exactly(3))->method('removeListener')->withConsecutive(
-            array(
+            [
                 'close',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            ),
-            array(
+            ],
+            [
                 'data',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            ),
-            array(
+            ],
+            [
                 'error',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            )
+            ]
         );
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
@@ -223,7 +224,7 @@ class ClientConnectionManagerTest extends TestCase
         $secondConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(\React\Promise\resolve($secondConnection));
+        $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(resolve($secondConnection));
 
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -297,7 +298,7 @@ class ClientConnectionManagerTest extends TestCase
         $secondConnection->expects($this->never())->method('close');
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(\React\Promise\resolve($secondConnection));
+        $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(resolve($secondConnection));
 
         $timerCallback = null;
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
@@ -334,34 +335,34 @@ class ClientConnectionManagerTest extends TestCase
 
         $streamHandler = null;
         $firstConnection->expects($this->exactly(3))->method('on')->withConsecutive(
-            array(
+            [
                 'close',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     $streamHandler = $cb;
                     return true;
                 })
-            ),
-            array(
+            ],
+            [
                 'data',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            ),
-            array(
+            ],
+            [
                 'error',
                 $this->callback(function ($cb) use (&$streamHandler) {
                     assert($streamHandler instanceof \Closure);
                     return $cb === $streamHandler;
                 })
-            )
+            ]
         );
 
         $secondConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $secondConnection->expects($this->never())->method('close');
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(\React\Promise\resolve($secondConnection));
+        $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(resolve($secondConnection));
 
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();

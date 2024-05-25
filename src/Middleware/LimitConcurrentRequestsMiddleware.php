@@ -6,10 +6,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Io\HttpBodyStream;
 use React\Http\Io\PauseBufferStream;
-use React\Promise;
 use React\Promise\PromiseInterface;
 use React\Promise\Deferred;
 use React\Stream\ReadableStreamInterface;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 /**
  * Limits how many next handlers can be executed concurrently.
@@ -71,7 +72,7 @@ final class LimitConcurrentRequestsMiddleware
 {
     private $limit;
     private $pending = 0;
-    private $queue = array();
+    private $queue = [];
 
     /**
      * @param int $limit Maximum amount of concurrent requests handled.
@@ -92,13 +93,9 @@ final class LimitConcurrentRequestsMiddleware
 
             try {
                 $response = $next($request);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $this->processQueue();
                 throw $e;
-            } catch (\Throwable $e) { // @codeCoverageIgnoreStart
-                // handle Errors just like Exceptions (PHP 7+ only)
-                $this->processQueue();
-                throw $e; // @codeCoverageIgnoreEnd
             }
 
             // happy path: if next request handler returned immediately,
@@ -110,7 +107,7 @@ final class LimitConcurrentRequestsMiddleware
 
             // if the next handler returns a pending promise, we have to
             // await its resolution before invoking next queued request
-            return $this->await(Promise\resolve($response));
+            return $this->await(resolve($response));
         }
 
         // if we reach this point, then this request will need to be queued
@@ -130,36 +127,29 @@ final class LimitConcurrentRequestsMiddleware
         }
 
         // get next queue position
-        $queue =& $this->queue;
-        $queue[] = null;
-        \end($queue);
-        $id = \key($queue);
+        $this->queue[] = null;
+        \end($this->queue);
+        $id = \key($this->queue);
 
-        $deferred = new Deferred(function ($_, $reject) use (&$queue, $id) {
+        $deferred = new Deferred(function ($_, $reject) use ($id) {
             // queued promise cancelled before its next handler is invoked
             // remove from queue and reject explicitly
-            unset($queue[$id]);
+            unset($this->queue[$id]);
             $reject(new \RuntimeException('Cancelled queued next handler'));
         });
 
         // queue request and process queue if pending does not exceed limit
-        $queue[$id] = $deferred;
+        $this->queue[$id] = $deferred;
 
-        $pending = &$this->pending;
-        $that = $this;
-        return $deferred->promise()->then(function () use ($request, $next, $body, &$pending, $that) {
+        return $deferred->promise()->then(function () use ($request, $next, $body) {
             // invoke next request handler
-            ++$pending;
+            ++$this->pending;
 
             try {
                 $response = $next($request);
-            } catch (\Exception $e) {
-                $that->processQueue();
+            } catch (\Throwable $e) {
+                $this->processQueue();
                 throw $e;
-            } catch (\Throwable $e) { // @codeCoverageIgnoreStart
-                // handle Errors just like Exceptions (PHP 7+ only)
-                $that->processQueue();
-                throw $e; // @codeCoverageIgnoreEnd
             }
 
             // resume readable stream and replay buffered events
@@ -169,27 +159,24 @@ final class LimitConcurrentRequestsMiddleware
 
             // if the next handler returns a pending promise, we have to
             // await its resolution before invoking next queued request
-            return $that->await(Promise\resolve($response));
+            return $this->await(resolve($response));
         });
     }
 
     /**
-     * @internal
      * @param PromiseInterface $promise
      * @return PromiseInterface
      */
-    public function await(PromiseInterface $promise)
+    private function await(PromiseInterface $promise)
     {
-        $that = $this;
-
-        return $promise->then(function ($response) use ($that) {
-            $that->processQueue();
+        return $promise->then(function ($response) {
+            $this->processQueue();
 
             return $response;
-        }, function ($error) use ($that) {
-            $that->processQueue();
+        }, function ($error) {
+            $this->processQueue();
 
-            return Promise\reject($error);
+            return reject($error);
         });
     }
 

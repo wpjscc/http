@@ -156,7 +156,7 @@ class PauseBufferStreamTest extends TestCase
 
         $stream->on('error', $this->expectCallableOnce());
         $stream->on('close', $this->expectCallableOnce());
-        $input->emit('error', array(new \RuntimeException()));
+        $input->emit('error', [new \RuntimeException()]);
     }
 
     public function testPausedStreamWillNotPassThroughErrorEvent()
@@ -167,7 +167,7 @@ class PauseBufferStreamTest extends TestCase
         $stream->pause();
         $stream->on('error', $this->expectCallableNever());
         $stream->on('close', $this->expectCallableNever());
-        $input->emit('error', array(new \RuntimeException()));
+        $input->emit('error', [new \RuntimeException()]);
     }
 
     public function testPausedStreamWillPassThroughErrorEventOnResume()
@@ -176,7 +176,7 @@ class PauseBufferStreamTest extends TestCase
         $stream = new PauseBufferStream($input);
 
         $stream->pause();
-        $input->emit('error', array(new \RuntimeException()));
+        $input->emit('error', [new \RuntimeException()]);
 
         $stream->on('error', $this->expectCallableOnce());
         $stream->on('close', $this->expectCallableOnce());
@@ -191,7 +191,7 @@ class PauseBufferStreamTest extends TestCase
         $stream->pause();
         $stream->on('error', $this->expectCallableNever());
         $stream->on('close', $this->expectCallableOnce());
-        $input->emit('error', array(new \RuntimeException()));
+        $input->emit('error', [new \RuntimeException()]);
 
         $stream->close();
     }

@@ -65,7 +65,7 @@ class EmptyBodyStreamTest extends TestCase
         $this->bodyStream->close();
         $this->bodyStream->close();
 
-        $this->assertEquals(array(), $this->bodyStream->listeners('close'));
+        $this->assertEquals([], $this->bodyStream->listeners('close'));
     }
 
     public function testTell()
@@ -104,7 +104,7 @@ class EmptyBodyStreamTest extends TestCase
 
     public function testGetMetaDataWithoutKeyReturnsEmptyArray()
     {
-        $this->assertSame(array(), $this->bodyStream->getMetadata());
+        $this->assertSame([], $this->bodyStream->getMetadata());
     }
 
     public function testGetMetaDataWithKeyReturnsNull()

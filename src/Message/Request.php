@@ -40,7 +40,7 @@ final class Request extends AbstractRequest implements RequestInterface
     public function __construct(
         $method,
         $url,
-        array $headers = array(),
+        array $headers = [],
         $body = '',
         $version = '1.1'
     ) {

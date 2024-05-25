@@ -10,12 +10,12 @@ class UploadedFileTest extends TestCase
 {
     public function failtyErrorProvider()
     {
-        return array(
-            array('a'),
-            array(null),
-            array(-1),
-            array(9),
-        );
+        return [
+            ['a'],
+            [null],
+            [-1],
+            [9]
+        ];
     }
 
     /**

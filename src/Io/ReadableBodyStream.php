@@ -23,22 +23,20 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
         $this->input = $input;
         $this->size = $size;
 
-        $that = $this;
-        $pos =& $this->position;
-        $input->on('data', function ($data) use ($that, &$pos, $size) {
-            $that->emit('data', array($data));
+        $input->on('data', function ($data) use ($size) {
+            $this->emit('data', [$data]);
 
-            $pos += \strlen($data);
-            if ($size !== null && $pos >= $size) {
-                $that->handleEnd();
+            $this->position += \strlen($data);
+            if ($size !== null && $this->position >= $size) {
+                $this->handleEnd();
             }
         });
-        $input->on('error', function ($error) use ($that) {
-            $that->emit('error', array($error));
-            $that->close();
+        $input->on('error', function ($error) {
+            $this->emit('error', [$error]);
+            $this->close();
         });
-        $input->on('end', array($that, 'handleEnd'));
-        $input->on('close', array($that, 'close'));
+        $input->on('end', [$this, 'handleEnd']);
+        $input->on('close', [$this, 'close']);
     }
 
     public function close()
@@ -67,7 +65,7 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
         $this->input->resume();
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = array())
+    public function pipe(WritableStreamInterface $dest, array $options = [])
     {
         Util::pipe($this, $dest, $options);
 
@@ -136,14 +134,14 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
 
     public function getMetadata($key = null)
     {
-        return ($key === null) ? array() : null;
+        return ($key === null) ? [] : null;
     }
 
     /** @internal */
     public function handleEnd()
     {
         if ($this->position !== $this->size && $this->size !== null) {
-            $this->emit('error', array(new \UnderflowException('Unexpected end of response body after ' . $this->position . '/' . $this->size . ' bytes')));
+            $this->emit('error', [new \UnderflowException('Unexpected end of response body after ' . $this->position . '/' . $this->size . ' bytes')]);
         } else {
             $this->emit('end');
         }

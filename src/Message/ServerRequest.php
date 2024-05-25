@@ -31,12 +31,12 @@ use React\Stream\ReadableStreamInterface;
  */
 final class ServerRequest extends AbstractRequest implements ServerRequestInterface
 {
-    private $attributes = array();
+    private $attributes = [];
 
     private $serverParams;
-    private $fileParams = array();
-    private $cookies = array();
-    private $queryParams = array();
+    private $fileParams = [];
+    private $cookies = [];
+    private $queryParams = [];
     private $parsedBody;
 
     /**
@@ -51,10 +51,10 @@ final class ServerRequest extends AbstractRequest implements ServerRequestInterf
     public function __construct(
         $method,
         $url,
-        array $headers = array(),
+        array $headers = [],
         $body = '',
         $version = '1.1',
-        $serverParams = array()
+        $serverParams = []
     ) {
         if (\is_string($body)) {
             $body = new BufferedBody($body);
@@ -174,7 +174,7 @@ final class ServerRequest extends AbstractRequest implements ServerRequestInterf
     private function parseCookie($cookie)
     {
         $cookieArray = \explode(';', $cookie);
-        $result = array();
+        $result = [];
 
         foreach ($cookieArray as $pair) {
             $pair = \trim($pair);
@@ -202,7 +202,7 @@ final class ServerRequest extends AbstractRequest implements ServerRequestInterf
     public static function parseMessage($message, array $serverParams)
     {
         // parse request line like "GET /path HTTP/1.1"
-        $start = array();
+        $start = [];
         if (!\preg_match('#^(?<method>[^ ]+) (?<target>[^ ]+) HTTP/(?<version>\d\.\d)#m', $message, $start)) {
             throw new \InvalidArgumentException('Unable to parse invalid request-line');
         }
@@ -213,7 +213,7 @@ final class ServerRequest extends AbstractRequest implements ServerRequestInterf
         }
 
         // check number of valid header fields matches number of lines + request line
-        $matches = array();
+        $matches = [];
         $n = \preg_match_all(self::REGEX_HEADERS, $message, $matches, \PREG_SET_ORDER);
         if (\substr_count($message, "\n") !== $n + 1) {
             throw new \InvalidArgumentException('Unable to parse invalid request header fields');
@@ -221,7 +221,7 @@ final class ServerRequest extends AbstractRequest implements ServerRequestInterf
 
         // format all header fields into associative array
         $host = null;
-        $headers = array();
+        $headers = [];
         foreach ($matches as $match) {
             $headers[$match[1]][] = $match[2];
 

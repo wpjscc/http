@@ -9,13 +9,15 @@ use React\Http\Io\EmptyBodyStream;
 use React\Http\Io\ReadableBodyStream;
 use React\Http\Io\Sender;
 use React\Http\Message\Request;
-use React\Promise;
+use React\Promise\Promise;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 class SenderTest extends TestCase
 {
-    /** @var \React\EventLoop\LoopInterface */
+    /** @var LoopInterface */
     private $loop;
 
     /**
@@ -55,7 +57,7 @@ class SenderTest extends TestCase
     public function testSenderConnectorRejection()
     {
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new \RuntimeException('Rejected')));
+        $connector->expects($this->once())->method('connect')->willReturn(reject(new \RuntimeException('Rejected')));
 
         $sender = new Sender(new HttpClient(new ClientConnectionManager($connector, $this->loop)));
 
@@ -80,7 +82,7 @@ class SenderTest extends TestCase
 
         $sender = new Sender($client);
 
-        $request = new Request('POST', 'http://www.google.com/', array(), 'hello');
+        $request = new Request('POST', 'http://www.google.com/', [], 'hello');
         $sender->send($request);
     }
 
@@ -93,7 +95,7 @@ class SenderTest extends TestCase
 
         $sender = new Sender($client);
 
-        $request = new Request('POST', 'http://www.google.com/', array(), '');
+        $request = new Request('POST', 'http://www.google.com/', [], '');
         $sender->send($request);
     }
 
@@ -110,7 +112,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', [], new ReadableBodyStream($stream));
         $sender->send($request);
     }
 
@@ -118,7 +120,7 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("5\r\nhello\r\n"))->willReturn(false);
+        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive([""], ["5\r\nhello\r\n"])->willReturn(false);
 
         $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
         $client->expects($this->once())->method('request')->willReturn($outgoing);
@@ -126,7 +128,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', [], new ReadableBodyStream($stream));
         $sender->send($request);
 
         $ret = $stream->write('hello');
@@ -137,7 +139,7 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("0\r\n\r\n"))->willReturn(false);
+        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive([""], ["0\r\n\r\n"])->willReturn(false);
         $outgoing->expects($this->once())->method('end')->with(null);
 
         $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
@@ -146,7 +148,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', [], new ReadableBodyStream($stream));
         $sender->send($request);
 
         $stream->end();
@@ -167,10 +169,10 @@ class SenderTest extends TestCase
 
         $expected = new \RuntimeException();
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', [], new ReadableBodyStream($stream));
         $promise = $sender->send($request);
 
-        $stream->emit('error', array($expected));
+        $stream->emit('error', [$expected]);
 
         $exception = null;
         $promise->then(null, function ($e) use (&$exception) {
@@ -196,7 +198,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', [], new ReadableBodyStream($stream));
         $promise = $sender->send($request);
 
         $stream->close();
@@ -214,7 +216,7 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("0\r\n\r\n"))->willReturn(false);
+        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive([""], ["0\r\n\r\n"])->willReturn(false);
         $outgoing->expects($this->once())->method('end');
         $outgoing->expects($this->never())->method('close');
 
@@ -224,7 +226,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', [], new ReadableBodyStream($stream));
         $promise = $sender->send($request);
 
         $stream->end();
@@ -248,7 +250,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $stream = new ThroughStream();
-        $request = new Request('POST', 'http://www.google.com/', array('Content-Length' => '100'), new ReadableBodyStream($stream));
+        $request = new Request('POST', 'http://www.google.com/', ['Content-Length' => '100'], new ReadableBodyStream($stream));
         $sender->send($request);
     }
 
@@ -275,7 +277,7 @@ class SenderTest extends TestCase
         $sender = new Sender($client);
 
         $body = new EmptyBodyStream();
-        $request = new Request('GET', 'http://www.google.com/', array(), $body);
+        $request = new Request('GET', 'http://www.google.com/', [], $body);
 
         $sender->send($request);
     }
@@ -302,7 +304,7 @@ class SenderTest extends TestCase
 
         $sender = new Sender($client);
 
-        $request = new Request('CUSTOM', 'http://www.google.com/', array('Content-Length' => '0'));
+        $request = new Request('CUSTOM', 'http://www.google.com/', ['Content-Length' => '0']);
         $sender->send($request);
     }
 
@@ -330,13 +332,13 @@ class SenderTest extends TestCase
 
         $sender = new Sender($client);
 
-        $request = new Request('GET', 'http://john:dummy@www.example.com', array('Authorization' => 'bearer abc123'));
+        $request = new Request('GET', 'http://john:dummy@www.example.com', ['Authorization' => 'bearer abc123']);
         $sender->send($request);
     }
 
     public function testCancelRequestWillCancelConnector()
     {
-        $promise = new \React\Promise\Promise(function () { }, function () {
+        $promise = new Promise(function () { }, function () {
             throw new \RuntimeException();
         });
 
@@ -364,7 +366,7 @@ class SenderTest extends TestCase
         $connection->expects($this->once())->method('close');
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->willReturn(Promise\resolve($connection));
+        $connector->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $sender = new Sender(new HttpClient(new ClientConnectionManager($connector, $this->loop)));
 

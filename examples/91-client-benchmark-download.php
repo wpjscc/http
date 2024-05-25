@@ -16,7 +16,7 @@ use React\EventLoop\Loop;
 use React\Http\Browser;
 use React\Stream\ReadableStreamInterface;
 
-$url = isset($argv[1]) ? $argv[1] : 'http://google.com/';
+$url = $argv[1] ?? 'http://google.com/';
 
 require __DIR__ . '/../vendor/autoload.php';
 

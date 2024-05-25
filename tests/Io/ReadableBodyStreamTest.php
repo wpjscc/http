@@ -250,6 +250,6 @@ class ReadableBodyStreamTest extends TestCase
 
     public function testPointlessGetMetadataReturnsEmptyArrayWhenNoKeyIsGiven()
     {
-        $this->assertEquals(array(), $this->stream->getMetadata());
+        $this->assertEquals([], $this->stream->getMetadata());
     }
 }

@@ -16,10 +16,10 @@ require __DIR__ . '/../vendor/autoload.php';
 $proxy = new Clue\React\Socks\Client(getenv('socks_proxy') ?: '127.0.0.1:1080');
 
 // create a Browser object that uses the SOCKS proxy client for connections
-$connector = new Connector(array(
+$connector = new Connector([
     'tcp' => $proxy,
     'dns' => false
-));
+]);
 
 $browser = new Browser($connector);
 

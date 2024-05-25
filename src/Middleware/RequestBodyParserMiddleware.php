@@ -21,7 +21,7 @@ final class RequestBodyParserMiddleware
     public function __invoke(ServerRequestInterface $request, $next)
     {
         $type = \strtolower($request->getHeaderLine('Content-Type'));
-        list ($type) = \explode(';', $type);
+        [$type] = \explode(';', $type);
 
         if ($type === 'application/x-www-form-urlencoded') {
             return $next($this->parseFormUrlencoded($request));
@@ -38,7 +38,7 @@ final class RequestBodyParserMiddleware
     {
         // parse string into array structure
         // ignore warnings due to excessive data structures (max_input_vars and max_input_nesting_level)
-        $ret = array();
+        $ret = [];
         @\parse_str((string)$request->getBody(), $ret);
 
         return $request->withParsedBody($ret);

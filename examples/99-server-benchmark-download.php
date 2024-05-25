@@ -52,7 +52,7 @@ class ChunkRepeater extends EventEmitter implements ReadableStreamInterface
         $this->paused = false;
         while ($this->position < $this->count && !$this->paused) {
             ++$this->position;
-            $this->emit('data', array($this->chunk));
+            $this->emit('data', [$this->chunk]);
         }
 
         // end once the last chunk has been written
@@ -62,7 +62,7 @@ class ChunkRepeater extends EventEmitter implements ReadableStreamInterface
         }
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = array())
+    public function pipe(WritableStreamInterface $dest, array $options = [])
     {
         return;
     }
@@ -106,19 +106,19 @@ $http = new React\Http\HttpServer(function (ServerRequestInterface $request) {
             return new Response(Response::STATUS_NOT_FOUND);
     }
 
-    React\EventLoop\Loop::addTimer(0, array($stream, 'resume'));
+    React\EventLoop\Loop::addTimer(0, [$stream, 'resume']);
 
     return new Response(
         Response::STATUS_OK,
-        array(
+        [
             'Content-Type' => 'application/octet-data',
             'Content-Length' => $stream->getSize()
-        ),
+        ],
         $stream
     );
 });
 
-$socket = new React\Socket\SocketServer(isset($argv[1]) ? $argv[1] : '0.0.0.0:0');
+$socket = new React\Socket\SocketServer($argv[1] ?? '0.0.0.0:0');
 $http->listen($socket);
 
 echo 'Listening on ' . str_replace('tcp:', 'http:', $socket->getAddress()) . PHP_EOL;
