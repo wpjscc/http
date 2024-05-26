@@ -2,15 +2,16 @@
 
 namespace React\Tests\Io;
 
-use React\Tests\Http\TestCase;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Tests\Http\TestCase;
 use React\Http\Io\PauseBufferStream;
 
 class PauseBufferStreamTest extends TestCase
 {
     public function testPauseMethodWillBePassedThroughToInput()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $stream = new PauseBufferStream($input);
@@ -19,7 +20,7 @@ class PauseBufferStreamTest extends TestCase
 
     public function testCloseMethodWillBePassedThroughToInput()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('close');
 
         $stream = new PauseBufferStream($input);
@@ -28,7 +29,7 @@ class PauseBufferStreamTest extends TestCase
 
     public function testPauseMethodWillNotBePassedThroughToInputAfterClose()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->never())->method('pause');
 
         $stream = new PauseBufferStream($input);

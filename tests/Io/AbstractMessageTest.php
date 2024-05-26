@@ -26,7 +26,7 @@ class AbstractMessageTest extends TestCase
         $message = new MessageMock(
             '1.1',
             [],
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            $this->createMock(StreamInterface::class)
         );
 
         $new = $message->withProtocolVersion('1.0');
@@ -40,7 +40,7 @@ class AbstractMessageTest extends TestCase
         $message = new MessageMock(
             '1.1',
             [],
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            $this->createMock(StreamInterface::class)
         );
 
         $new = $message->withProtocolVersion('1.1');
@@ -55,7 +55,7 @@ class AbstractMessageTest extends TestCase
             [
                 'Content-Type' => 'text/plain'
             ],
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            $this->createMock(StreamInterface::class)
         );
 
         $this->assertEquals(['Content-Type' => ['text/plain']], $message->getHeaders());
@@ -109,7 +109,7 @@ class AbstractMessageTest extends TestCase
                     'b=2'
                 ]
             ],
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            $this->createMock(StreamInterface::class)
         );
 
         $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2']], $message->getHeaders());
@@ -152,7 +152,7 @@ class AbstractMessageTest extends TestCase
             [
                 'Content-Type' => []
             ],
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            $this->createMock(StreamInterface::class)
         );
 
         $this->assertEquals([], $message->getHeaders());
@@ -183,7 +183,7 @@ class AbstractMessageTest extends TestCase
                 'set-cookie' => ['b=2'],
                 'set-COOKIE' => []
             ],
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            $this->createMock(StreamInterface::class)
         );
 
         $this->assertEquals(['set-cookie' => ['a=1', 'b=2']], $message->getHeaders());
@@ -192,14 +192,14 @@ class AbstractMessageTest extends TestCase
 
     public function testWithBodyReturnsNewInstanceWhenBodyIsChanged()
     {
-        $body = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body = $this->createMock(StreamInterface::class);
         $message = new MessageMock(
             '1.1',
             [],
             $body
         );
 
-        $body2 = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body2 = $this->createMock(StreamInterface::class);
         $new = $message->withBody($body2);
         $this->assertNotSame($message, $new);
         $this->assertSame($body2, $new->getBody());
@@ -208,7 +208,7 @@ class AbstractMessageTest extends TestCase
 
     public function testWithBodyReturnsSameInstanceWhenBodyIsUnchanged()
     {
-        $body = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body = $this->createMock(StreamInterface::class);
         $message = new MessageMock(
             '1.1',
             [],

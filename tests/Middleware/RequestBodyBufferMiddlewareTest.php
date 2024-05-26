@@ -272,7 +272,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $this->assertFalse($stream->isWritable());
 
         assert($exception instanceof \RuntimeException);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Buffered 3', $exception->getMessage());
         $this->assertEquals(42, $exception->getCode());
         $this->assertNull($exception->getPrevious());
@@ -307,7 +307,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $this->assertFalse($stream->isWritable());
 
         assert($exception instanceof \Error);
-        $this->assertInstanceOf('Error', $exception);
+        $this->assertInstanceOf(\Error::class, $exception);
         $this->assertEquals('Buffered 3', $exception->getMessage());
         $this->assertEquals(42, $exception->getCode());
         $this->assertNull($exception->getPrevious());
@@ -342,10 +342,10 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $this->assertFalse($stream->isWritable());
 
         assert($exception instanceof \RuntimeException);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Error while buffering request body: Unexpected Foo', $exception->getMessage());
         $this->assertEquals(42, $exception->getCode());
-        $this->assertInstanceOf('UnexpectedValueException', $exception->getPrevious());
+        $this->assertInstanceOf(\UnexpectedValueException::class, $exception->getPrevious());
     }
 
     public function testFullBodyStreamedBeforeCallingNextMiddleware()
@@ -399,7 +399,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         });
 
         assert($exception instanceof \RuntimeException);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Cancelled buffering request body', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());

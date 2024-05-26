@@ -9,118 +9,116 @@ class UriTest extends TestCase
 {
     public function testCtorWithInvalidSyntaxThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new Uri('///');
     }
 
     public function testCtorWithInvalidSchemeThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new Uri('not+a+scheme://localhost');
     }
 
     public function testCtorWithInvalidHostThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new Uri('http://not a host/');
     }
 
     public function testCtorWithInvalidPortThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new Uri('http://localhost:80000/');
     }
 
     public static function provideValidUris()
     {
-        return [
-            [
-                'http://localhost'
-            ],
-            [
-                'http://localhost/'
-            ],
-            [
-                'http://localhost:8080/'
-            ],
-            [
-                'http://127.0.0.1/'
-            ],
-            [
-                'http://[::1]:8080/'
-            ],
-            [
-                'http://localhost/path'
-            ],
-            [
-                'http://localhost/sub/path'
-            ],
-            [
-                'http://localhost/with%20space'
-            ],
-            [
-                'http://localhost/with%2fslash'
-            ],
-            [
-                'http://localhost/?name=Alice'
-            ],
-            [
-                'http://localhost/?name=John+Doe'
-            ],
-            [
-                'http://localhost/?name=John%20Doe'
-            ],
-            [
-                'http://localhost/?name=Alice&age=42'
-            ],
-            [
-                'http://localhost/?name=Alice&'
-            ],
-            [
-                'http://localhost/?choice=A%26B'
-            ],
-            [
-                'http://localhost/?safe=Yes!?'
-            ],
-            [
-                'http://localhost/?alias=@home'
-            ],
-            [
-                'http://localhost/?assign:=true'
-            ],
-            [
-                'http://localhost/?name='
-            ],
-            [
-                'http://localhost/?name'
-            ],
-            [
-                ''
-            ],
-            [
-                '/'
-            ],
-            [
-                '/path'
-            ],
-            [
-                'path'
-            ],
-            [
-                'http://user@localhost/'
-            ],
-            [
-                'http://user:@localhost/'
-            ],
-            [
-                'http://:pass@localhost/'
-            ],
-            [
-                'http://user:pass@localhost/path?query#fragment'
-            ],
-            [
-                'http://user%20name:pass%20word@localhost/path%20name?query%20name#frag%20ment'
-            ]
+        yield [
+            'http://localhost'
+        ];
+        yield [
+            'http://localhost/'
+        ];
+        yield [
+            'http://localhost:8080/'
+        ];
+        yield [
+            'http://127.0.0.1/'
+        ];
+        yield [
+            'http://[::1]:8080/'
+        ];
+        yield [
+            'http://localhost/path'
+        ];
+        yield [
+            'http://localhost/sub/path'
+        ];
+        yield [
+            'http://localhost/with%20space'
+        ];
+        yield [
+            'http://localhost/with%2fslash'
+        ];
+        yield [
+            'http://localhost/?name=Alice'
+        ];
+        yield [
+            'http://localhost/?name=John+Doe'
+        ];
+        yield [
+            'http://localhost/?name=John%20Doe'
+        ];
+        yield [
+            'http://localhost/?name=Alice&age=42'
+        ];
+        yield [
+            'http://localhost/?name=Alice&'
+        ];
+        yield [
+            'http://localhost/?choice=A%26B'
+        ];
+        yield [
+            'http://localhost/?safe=Yes!?'
+        ];
+        yield [
+            'http://localhost/?alias=@home'
+        ];
+        yield [
+            'http://localhost/?assign:=true'
+        ];
+        yield [
+            'http://localhost/?name='
+        ];
+        yield [
+            'http://localhost/?name'
+        ];
+        yield [
+            ''
+        ];
+        yield [
+            '/'
+        ];
+        yield [
+            '/path'
+        ];
+        yield [
+            'path'
+        ];
+        yield [
+            'http://user@localhost/'
+        ];
+        yield [
+            'http://user:@localhost/'
+        ];
+        yield [
+            'http://:pass@localhost/'
+        ];
+        yield [
+            'http://user:pass@localhost/path?query#fragment'
+        ];
+        yield [
+            'http://user%20name:pass%20word@localhost/path%20name?query%20name#frag%20ment'
         ];
     }
 
@@ -137,35 +135,33 @@ class UriTest extends TestCase
 
     public static function provideValidUrisThatWillBeTransformed()
     {
-        return [
-            [
-                'http://localhost:8080/?',
-                'http://localhost:8080/'
-            ],
-            [
-                'http://localhost:8080/#',
-                'http://localhost:8080/'
-            ],
-            [
-                'http://localhost:8080/?#',
-                'http://localhost:8080/'
-            ],
-            [
-                'http://@localhost:8080/',
-                'http://localhost:8080/'
-            ],
-            [
-                'http://localhost:8080/?percent=50%',
-                'http://localhost:8080/?percent=50%25'
-            ],
-            [
-                'http://user name:pass word@localhost/path name?query name#frag ment',
-                'http://user%20name:pass%20word@localhost/path%20name?query%20name#frag%20ment'
-            ],
-            [
-                'HTTP://USER:PASS@LOCALHOST:8080/PATH?QUERY#FRAGMENT',
-                'http://USER:PASS@localhost:8080/PATH?QUERY#FRAGMENT'
-            ]
+        yield [
+            'http://localhost:8080/?',
+            'http://localhost:8080/'
+        ];
+        yield [
+            'http://localhost:8080/#',
+            'http://localhost:8080/'
+        ];
+        yield [
+            'http://localhost:8080/?#',
+            'http://localhost:8080/'
+        ];
+        yield [
+            'http://@localhost:8080/',
+            'http://localhost:8080/'
+        ];
+        yield [
+            'http://localhost:8080/?percent=50%',
+            'http://localhost:8080/?percent=50%25'
+        ];
+        yield [
+            'http://user name:pass word@localhost/path name?query name#frag ment',
+            'http://user%20name:pass%20word@localhost/path%20name?query%20name#frag%20ment'
+        ];
+        yield [
+            'HTTP://USER:PASS@LOCALHOST:8080/PATH?QUERY#FRAGMENT',
+            'http://USER:PASS@localhost:8080/PATH?QUERY#FRAGMENT'
         ];
     }
 
@@ -251,7 +247,7 @@ class UriTest extends TestCase
     {
         $uri = new Uri('http://localhost');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $uri->withScheme('invalid+scheme');
     }
 
@@ -375,7 +371,7 @@ class UriTest extends TestCase
     {
         $uri = new Uri('http://localhost');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $uri->withHost('invalid+host');
     }
 
@@ -383,7 +379,7 @@ class UriTest extends TestCase
     {
         $uri = new Uri('http://localhost');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $uri->withHost('invalid host');
     }
 
@@ -448,7 +444,7 @@ class UriTest extends TestCase
     {
         $uri = new Uri('http://localhost');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $uri->withPort(0);
     }
 
@@ -456,7 +452,7 @@ class UriTest extends TestCase
     {
         $uri = new Uri('http://localhost');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $uri->withPort(65536);
     }
 
@@ -576,112 +572,110 @@ class UriTest extends TestCase
 
     public static function provideResolveUris()
     {
-        return [
-            [
-                'http://localhost/',
-                '',
-                'http://localhost/'
-            ],
-            [
-                'http://localhost/',
-                'http://example.com/',
-                'http://example.com/'
-            ],
-            [
-                'http://localhost/',
-                'path',
-                'http://localhost/path'
-            ],
-            [
-                'http://localhost/',
-                'path/',
-                'http://localhost/path/'
-            ],
-            [
-                'http://localhost/',
-                'path//',
-                'http://localhost/path/'
-            ],
-            [
-                'http://localhost',
-                'path',
-                'http://localhost/path'
-            ],
-            [
-                'http://localhost/a/b',
-                '/path',
-                'http://localhost/path'
-            ],
-            [
-                'http://localhost/',
-                '/a/b/c',
-                'http://localhost/a/b/c'
-            ],
-            [
-                'http://localhost/a/path',
-                'b/c',
-                'http://localhost/a/b/c'
-            ],
-            [
-                'http://localhost/a/path',
-                '/b/c',
-                'http://localhost/b/c'
-            ],
-            [
-                'http://localhost/a/path/',
-                'b/c',
-                'http://localhost/a/path/b/c'
-            ],
-            [
-                'http://localhost/a/path/',
-                '../b/c',
-                'http://localhost/a/b/c'
-            ],
-            [
-                'http://localhost',
-                '../../../a/b',
-                'http://localhost/a/b'
-            ],
-            [
-                'http://localhost/path',
-                '?query',
-                'http://localhost/path?query'
-            ],
-            [
-                'http://localhost/path',
-                '#fragment',
-                'http://localhost/path#fragment'
-            ],
-            [
-                'http://localhost/path',
-                'http://localhost',
-                'http://localhost'
-            ],
-            [
-                'http://localhost/path',
-                'http://localhost/?query#fragment',
-                'http://localhost/?query#fragment'
-            ],
-            [
-                'http://localhost/path/?a#fragment',
-                '?b',
-                'http://localhost/path/?b'
-            ],
-            [
-                'http://localhost/path',
-                '//localhost',
-                'http://localhost'
-            ],
-            [
-                'http://localhost/path',
-                '//localhost/a?query',
-                'http://localhost/a?query'
-            ],
-            [
-                'http://localhost/path',
-                '//LOCALHOST',
-                'http://localhost'
-            ]
+        yield [
+            'http://localhost/',
+            '',
+            'http://localhost/'
+        ];
+        yield [
+            'http://localhost/',
+            'http://example.com/',
+            'http://example.com/'
+        ];
+        yield [
+            'http://localhost/',
+            'path',
+            'http://localhost/path'
+        ];
+        yield [
+            'http://localhost/',
+            'path/',
+            'http://localhost/path/'
+        ];
+        yield [
+            'http://localhost/',
+            'path//',
+            'http://localhost/path/'
+        ];
+        yield [
+            'http://localhost',
+            'path',
+            'http://localhost/path'
+        ];
+        yield [
+            'http://localhost/a/b',
+            '/path',
+            'http://localhost/path'
+        ];
+        yield [
+            'http://localhost/',
+            '/a/b/c',
+            'http://localhost/a/b/c'
+        ];
+        yield [
+            'http://localhost/a/path',
+            'b/c',
+            'http://localhost/a/b/c'
+        ];
+        yield [
+            'http://localhost/a/path',
+            '/b/c',
+            'http://localhost/b/c'
+        ];
+        yield [
+            'http://localhost/a/path/',
+            'b/c',
+            'http://localhost/a/path/b/c'
+        ];
+        yield [
+            'http://localhost/a/path/',
+            '../b/c',
+            'http://localhost/a/b/c'
+        ];
+        yield [
+            'http://localhost',
+            '../../../a/b',
+            'http://localhost/a/b'
+        ];
+        yield [
+            'http://localhost/path',
+            '?query',
+            'http://localhost/path?query'
+        ];
+        yield [
+            'http://localhost/path',
+            '#fragment',
+            'http://localhost/path#fragment'
+        ];
+        yield [
+            'http://localhost/path',
+            'http://localhost',
+            'http://localhost'
+        ];
+        yield [
+            'http://localhost/path',
+            'http://localhost/?query#fragment',
+            'http://localhost/?query#fragment'
+        ];
+        yield [
+            'http://localhost/path/?a#fragment',
+            '?b',
+            'http://localhost/path/?b'
+        ];
+        yield [
+            'http://localhost/path',
+            '//localhost',
+            'http://localhost'
+        ];
+        yield [
+            'http://localhost/path',
+            '//localhost/a?query',
+            'http://localhost/a?query'
+        ];
+        yield [
+            'http://localhost/path',
+            '//LOCALHOST',
+            'http://localhost'
         ];
     }
 

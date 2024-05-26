@@ -3,8 +3,9 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\ReadableBodyStream;
-use React\Tests\Http\TestCase;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Tests\Http\TestCase;
 
 class ReadableBodyStreamTest extends TestCase
 {
@@ -16,7 +17,7 @@ class ReadableBodyStreamTest extends TestCase
      */
     public function setUpStream()
     {
-        $this->input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $this->input = $this->createMock(ReadableStreamInterface::class);
         $this->stream = new ReadableBodyStream($this->input);
     }
 
@@ -102,7 +103,7 @@ class ReadableBodyStreamTest extends TestCase
         $this->input->write('hi');
         $this->input->end();
 
-        $this->assertInstanceOf('UnderflowException', $called);
+        $this->assertInstanceOf(\UnderflowException::class, $called);
         $this->assertSame('Unexpected end of response body after 2/5 bytes', $called->getMessage());
     }
 
@@ -188,7 +189,7 @@ class ReadableBodyStreamTest extends TestCase
 
     public function testPointlessDetachThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->detach();
     }
 
@@ -199,7 +200,7 @@ class ReadableBodyStreamTest extends TestCase
 
     public function testPointlessTellThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->tell();
     }
 
@@ -210,13 +211,13 @@ class ReadableBodyStreamTest extends TestCase
 
     public function testPointlessSeekThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->seek(0);
     }
 
     public function testPointlessRewindThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->rewind();
     }
 
@@ -227,19 +228,19 @@ class ReadableBodyStreamTest extends TestCase
 
     public function testPointlessWriteThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->write('');
     }
 
     public function testPointlessReadThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->read(8192);
     }
 
     public function testPointlessGetContentsThrows()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->stream->getContents();
     }
 

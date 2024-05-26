@@ -5,7 +5,10 @@ namespace React\Tests\Http\Io;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use React\EventLoop\LoopInterface;
+use React\EventLoop\TimerInterface;
 use React\Http\Io\ReadableBodyStream;
+use React\Http\Io\Sender;
 use React\Http\Io\Transaction;
 use React\Http\Message\Request;
 use React\Http\Message\Response;
@@ -13,6 +16,8 @@ use React\Http\Message\ResponseException;
 use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 use function React\Async\await;
@@ -24,12 +29,12 @@ class TransactionTest extends TestCase
     public function testWithOptionsReturnsNewInstanceWithChangedOption()
     {
         $sender = $this->makeSenderMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $transaction = new Transaction($sender, $loop);
 
         $new = $transaction->withOptions(['followRedirects' => false]);
 
-        $this->assertInstanceOf('React\Http\Io\Transaction', $new);
+        $this->assertInstanceOf(Transaction::class, $new);
         $this->assertNotSame($transaction, $new);
 
         $ref = new \ReflectionProperty($new, 'followRedirects');
@@ -41,7 +46,7 @@ class TransactionTest extends TestCase
     public function testWithOptionsDoesNotChangeOriginalInstance()
     {
         $sender = $this->makeSenderMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $transaction = new Transaction($sender, $loop);
 
         $transaction->withOptions(['followRedirects' => false]);
@@ -55,7 +60,7 @@ class TransactionTest extends TestCase
     public function testWithOptionsNullValueReturnsNewInstanceWithDefaultOption()
     {
         $sender = $this->makeSenderMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $transaction = new Transaction($sender, $loop);
 
         $transaction = $transaction->withOptions(['followRedirects' => false]);
@@ -69,34 +74,34 @@ class TransactionTest extends TestCase
 
     public function testTimeoutExplicitOptionWillStartTimeoutTimer()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(2, $this->anything())->willReturn($timer);
         $loop->expects($this->never())->method('cancelTimer');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
         $promise = $transaction->send($request);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
     }
 
     public function testTimeoutImplicitFromIniWillStartTimeoutTimer()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(2, $this->anything())->willReturn($timer);
         $loop->expects($this->never())->method('cancelTimer');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
 
@@ -105,24 +110,24 @@ class TransactionTest extends TestCase
         $promise = $transaction->send($request);
         ini_set('default_socket_timeout', $old);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
     }
 
     public function testTimeoutExplicitOptionWillRejectWhenTimerFires()
     {
         $timeout = null;
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(2, $this->callback(function ($cb) use (&$timeout) {
             $timeout = $cb;
             return true;
         }))->willReturn($timer);
         $loop->expects($this->never())->method('cancelTimer');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
@@ -136,42 +141,42 @@ class TransactionTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Request timed out after 2 seconds', $exception->getMessage());
     }
 
     public function testTimeoutExplicitOptionWillNotStartTimeoutWhenSenderResolvesImmediately()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->never())->method('addTimer');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $response = new Response(200, [], '');
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 0.001]);
         $promise = $transaction->send($request);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
         $promise->then($this->expectCallableOnceWith($response));
     }
 
     public function testTimeoutExplicitOptionWillCancelTimeoutTimerWhenSenderResolvesLaterOn()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $response = new Response(200, [], '');
 
         $deferred = new Deferred();
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn($deferred->promise());
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 0.001]);
@@ -179,41 +184,41 @@ class TransactionTest extends TestCase
 
         $deferred->resolve($response);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
         $promise->then($this->expectCallableOnceWith($response));
     }
 
     public function testTimeoutExplicitOptionWillNotStartTimeoutWhenSenderRejectsImmediately()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->never())->method('addTimer');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $exception = new \RuntimeException();
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(reject($exception));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(reject($exception));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 0.001]);
         $promise = $transaction->send($request);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
         $promise->then(null, $this->expectCallableOnceWith($exception));
     }
 
     public function testTimeoutExplicitOptionWillCancelTimeoutTimerWhenSenderRejectsLaterOn()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
         $deferred = new Deferred();
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn($deferred->promise());
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 0.001]);
@@ -222,49 +227,49 @@ class TransactionTest extends TestCase
         $exception = new \RuntimeException();
         $deferred->reject($exception);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
         $promise->then(null, $this->expectCallableOnceWith($exception));
     }
 
     public function testTimeoutExplicitNegativeWillNotStartTimeoutTimer()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->never())->method('addTimer');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => -1]);
         $promise = $transaction->send($request);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
     }
 
     public function testTimeoutExplicitOptionWillNotStartTimeoutTimerWhenRequestBodyIsStreaming()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->never())->method('addTimer');
 
         $stream = new ThroughStream();
         $request = new Request('POST', 'http://example.com', [], new ReadableBodyStream($stream));
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
         $promise = $transaction->send($request);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
     }
 
     public function testTimeoutExplicitOptionWillStartTimeoutTimerWhenStreamingRequestBodyIsAlreadyClosed()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(2, $this->anything())->willReturn($timer);
         $loop->expects($this->never())->method('cancelTimer');
 
@@ -272,28 +277,28 @@ class TransactionTest extends TestCase
         $stream->close();
         $request = new Request('POST', 'http://example.com', [], new ReadableBodyStream($stream));
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
         $promise = $transaction->send($request);
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
     }
 
     public function testTimeoutExplicitOptionWillStartTimeoutTimerWhenStreamingRequestBodyClosesWhileSenderIsStillPending()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(2, $this->anything())->willReturn($timer);
         $loop->expects($this->never())->method('cancelTimer');
 
         $stream = new ThroughStream();
         $request = new Request('POST', 'http://example.com', [], new ReadableBodyStream($stream));
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
@@ -301,20 +306,20 @@ class TransactionTest extends TestCase
 
         $stream->close();
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
     }
 
     public function testTimeoutExplicitOptionWillNotStartTimeoutTimerWhenStreamingRequestBodyClosesAfterSenderRejects()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->never())->method('addTimer');
 
         $stream = new ThroughStream();
         $request = new Request('POST', 'http://example.com', [], new ReadableBodyStream($stream));
 
         $deferred = new Deferred();
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn($deferred->promise());
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
@@ -323,7 +328,7 @@ class TransactionTest extends TestCase
         $deferred->reject(new \RuntimeException('Request failed'));
         $stream->close();
 
-        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
     }
@@ -331,8 +336,8 @@ class TransactionTest extends TestCase
     public function testTimeoutExplicitOptionWillRejectWhenTimerFiresAfterStreamingRequestBodyCloses()
     {
         $timeout = null;
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(2, $this->callback(function ($cb) use (&$timeout) {
             $timeout = $cb;
             return true;
@@ -342,8 +347,8 @@ class TransactionTest extends TestCase
         $stream = new ThroughStream();
         $request = new Request('POST', 'http://example.com', [], new ReadableBodyStream($stream));
 
-        $sender = $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(new Promise(function () { }));
+        $sender = $this->createMock(Sender::class);
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(new Promise(function () { }));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => 2]);
@@ -359,19 +364,19 @@ class TransactionTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Request timed out after 2 seconds', $exception->getMessage());
     }
 
     public function testReceivingErrorResponseWillRejectWithResponseException()
     {
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $response = new Response(404);
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['timeout' => -1]);
@@ -395,12 +400,12 @@ class TransactionTest extends TestCase
             $stream->close();
         });
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $response = new Response(200, [], new ReadableBodyStream($stream));
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, Loop::get());
         $promise = $transaction->send($request);
@@ -416,13 +421,13 @@ class TransactionTest extends TestCase
         $stream = new ThroughStream();
         $stream->on('close', $this->expectCallableOnce());
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
         $response = new Response(200, ['Content-Length' => '100000000'], new ReadableBodyStream($stream, 100000000));
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, Loop::get());
 
@@ -436,7 +441,7 @@ class TransactionTest extends TestCase
         $this->assertFalse($stream->isWritable());
 
         assert($exception instanceof \OverflowException);
-        $this->assertInstanceOf('OverflowException', $exception);
+        $this->assertInstanceOf(\OverflowException::class, $exception);
         $this->assertEquals('Response body size of 100000000 bytes exceeds maximum of 16777216 bytes', $exception->getMessage());
         $this->assertEquals(defined('SOCKET_EMSGSIZE') ? \SOCKET_EMSGSIZE : 90, $exception->getCode());
         $this->assertNull($exception->getPrevious());
@@ -447,13 +452,13 @@ class TransactionTest extends TestCase
         $stream = new ThroughStream();
         $stream->on('close', $this->expectCallableOnce());
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
 
         $response = new Response(200, [], new ReadableBodyStream($stream));
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, Loop::get());
         $transaction = $transaction->withOptions(['maximumSize' => 10]);
@@ -469,7 +474,7 @@ class TransactionTest extends TestCase
         $this->assertFalse($stream->isWritable());
 
         assert($exception instanceof \OverflowException);
-        $this->assertInstanceOf('OverflowException', $exception);
+        $this->assertInstanceOf(\OverflowException::class, $exception);
         $this->assertEquals('Response body size exceeds maximum of 10 bytes', $exception->getMessage());
         $this->assertEquals(defined('SOCKET_EMSGSIZE') ? \SOCKET_EMSGSIZE : 90, $exception->getCode());
         $this->assertNull($exception->getPrevious());
@@ -481,12 +486,12 @@ class TransactionTest extends TestCase
             throw new \UnexpectedValueException('Unexpected ' . $data, 42);
         });
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $response = new Response(200, [], new ReadableBodyStream($stream));
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, Loop::get());
         $promise = $transaction->send($request);
@@ -501,25 +506,25 @@ class TransactionTest extends TestCase
         $this->assertFalse($stream->isWritable());
 
         assert($exception instanceof \RuntimeException);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Error while buffering response body: Unexpected Foo', $exception->getMessage());
         $this->assertEquals(42, $exception->getCode());
-        $this->assertInstanceOf('UnexpectedValueException', $exception->getPrevious());
+        $this->assertInstanceOf(\UnexpectedValueException::class, $exception->getPrevious());
     }
 
     public function testCancelBufferingResponseWillCloseStreamAndReject()
     {
-        $stream = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $stream = $this->createMock(ReadableStreamInterface::class);
         $stream->expects($this->any())->method('isReadable')->willReturn(true);
         $stream->expects($this->once())->method('close');
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $request = $this->createMock(RequestInterface::class);
         $response = new Response(200, [], new ReadableBodyStream($stream));
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $deferred = new Deferred();
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+        $sender->expects($this->once())->method('send')->with($request)->willReturn($deferred->promise());
 
         $transaction = new Transaction($sender, Loop::get());
         $promise = $transaction->send($request);
@@ -533,7 +538,7 @@ class TransactionTest extends TestCase
         });
 
         assert($exception instanceof \RuntimeException);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Cancelled buffering response body', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
@@ -541,14 +546,14 @@ class TransactionTest extends TestCase
 
     public function testReceivingStreamingBodyWillResolveWithStreamingResponseIfStreamingIsEnabled()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
-        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
-        $response = new Response(200, [], new ReadableBodyStream($this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock()));
+        $request = $this->createMock(RequestInterface::class);
+        $response = new Response(200, [], new ReadableBodyStream($this->createMock(ReadableStreamInterface::class)));
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(resolve($response));
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(resolve($response));
 
         $transaction = new Transaction($sender, $loop);
         $transaction = $transaction->withOptions(['streaming' => true, 'timeout' => -1]);
@@ -566,7 +571,7 @@ class TransactionTest extends TestCase
 
     public function testResponseCode304WithoutLocationWillResolveWithResponseAsIs()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         // conditional GET request will respond with 304 (Not Modified
         $request = new Request('GET', 'http://example.com', ['If-None-Match' => '"abc"']);
@@ -583,7 +588,7 @@ class TransactionTest extends TestCase
 
     public function testCustomRedirectResponseCode333WillFollowLocationHeaderAndSendRedirectedRequest()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         // original GET request will respond with custom 333 redirect status code and follow location header
         $requestOriginal = new Request('GET', 'http://example.com');
@@ -605,7 +610,7 @@ class TransactionTest extends TestCase
 
     public function testFollowingRedirectWithSpecifiedHeaders()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = ['User-Agent' => 'Chrome'];
         $requestWithUserAgent = new Request('GET', 'http://example.com', $customHeaders);
@@ -635,7 +640,7 @@ class TransactionTest extends TestCase
 
     public function testRemovingAuthorizationHeaderWhenChangingHostnamesDuringRedirect()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = ['Authorization' => 'secret'];
         $requestWithAuthorization = new Request('GET', 'http://example.com', $customHeaders);
@@ -665,7 +670,7 @@ class TransactionTest extends TestCase
 
     public function testAuthorizationHeaderIsForwardedWhenRedirectingToSameDomain()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = ['Authorization' => 'secret'];
         $requestWithAuthorization = new Request('GET', 'http://example.com', $customHeaders);
@@ -695,7 +700,7 @@ class TransactionTest extends TestCase
 
     public function testAuthorizationHeaderIsForwardedWhenLocationContainsAuthentication()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -725,7 +730,7 @@ class TransactionTest extends TestCase
 
     public function testSomeRequestHeadersShouldBeRemovedWhenRedirecting()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = [
             'Content-Type' => 'text/html; charset=utf-8',
@@ -760,7 +765,7 @@ class TransactionTest extends TestCase
 
     public function testRequestMethodShouldBeChangedWhenRedirectingWithSeeOther()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = [
             'Content-Type' => 'text/html; charset=utf-8',
@@ -796,7 +801,7 @@ class TransactionTest extends TestCase
 
     public function testRequestMethodAndBodyShouldNotBeChangedWhenRedirectingWith307Or308()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = [
             'Content-Type' => 'text/html; charset=utf-8',
@@ -839,7 +844,7 @@ class TransactionTest extends TestCase
 
     public function testRedirectingStreamingBodyWith307Or308ShouldThrowCantRedirectStreamException()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $customHeaders = [
             'Content-Type' => 'text/html; charset=utf-8',
@@ -874,7 +879,7 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionWillCancelRequest()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -892,8 +897,8 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionWillCancelTimeoutTimer()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
@@ -914,7 +919,7 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionWillCancelRedirectedRequest()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -941,7 +946,7 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionWillCancelRedirectedRequestAgain()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -971,7 +976,7 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionWillCloseBufferingStream()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -994,7 +999,7 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionWillCloseBufferingStreamAgain()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -1015,7 +1020,7 @@ class TransactionTest extends TestCase
 
     public function testCancelTransactionShouldCancelSendingPromise()
     {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $request = new Request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -1045,6 +1050,6 @@ class TransactionTest extends TestCase
      */
     private function makeSenderMock()
     {
-        return $this->getMockBuilder('React\Http\Io\Sender')->disableOriginalConstructor()->getMock();
+        return $this->createMock(Sender::class);
     }
 }

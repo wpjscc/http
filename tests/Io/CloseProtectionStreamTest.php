@@ -3,14 +3,16 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\CloseProtectionStream;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Stream\WritableStreamInterface;
 use React\Tests\Http\TestCase;
 
 class CloseProtectionStreamTest extends TestCase
 {
     public function testCloseDoesNotCloseTheInputStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->disableOriginalConstructor()->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->never())->method('pause');
         $input->expects($this->never())->method('resume');
         $input->expects($this->never())->method('close');
@@ -35,7 +37,7 @@ class CloseProtectionStreamTest extends TestCase
 
     public function testResumeStreamWillResumeInputStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
         $input->expects($this->once())->method('resume');
 
@@ -46,7 +48,7 @@ class CloseProtectionStreamTest extends TestCase
 
     public function testCloseResumesInputStreamIfItWasPreviouslyPaused()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
         $input->expects($this->once())->method('resume');
 
@@ -73,7 +75,7 @@ class CloseProtectionStreamTest extends TestCase
         $input = new ThroughStream();
 
         $protection = new CloseProtectionStream($input);
-        $dest = $this->getMockBuilder('React\Stream\WritableStreamInterface')->getMock();
+        $dest = $this->createMock(WritableStreamInterface::class);
 
         $ret = $protection->pipe($dest);
 
@@ -132,7 +134,7 @@ class CloseProtectionStreamTest extends TestCase
 
     public function testPauseAfterCloseHasNoEffect()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->never())->method('pause');
         $input->expects($this->never())->method('resume');
 
@@ -146,7 +148,7 @@ class CloseProtectionStreamTest extends TestCase
 
     public function testResumeAfterCloseHasNoEffect()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->never())->method('pause');
         $input->expects($this->never())->method('resume');
 

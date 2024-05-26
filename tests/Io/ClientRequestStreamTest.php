@@ -4,11 +4,15 @@ namespace React\Tests\Http\Io;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use React\EventLoop\LoopInterface;
+use React\Http\Io\ClientConnectionManager;
 use React\Http\Io\ClientRequestStream;
 use React\Http\Message\Request;
 use React\Http\Message\Uri;
 use React\Promise\Deferred;
 use React\Promise\Promise;
+use React\Socket\Connection;
+use React\Socket\ConnectionInterface;
 use React\Stream\DuplexResourceStream;
 use React\Stream\ReadableStreamInterface;
 use React\Tests\Http\TestCase;
@@ -20,10 +24,10 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function testRequestShouldUseConnectionManagerWithUriFromRequestAndBindToStreamEvents()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
 
         $uri = new Uri('http://www.example.com');
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->with($uri)->willReturn(resolve($connection));
 
         $requestData = new Request('GET', $uri);
@@ -55,13 +59,13 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function requestShouldEmitErrorIfConnectionFails()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(reject(new \RuntimeException()));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
+        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf(\RuntimeException::class)));
         $request->on('close', $this->expectCallableOnce());
 
         $request->end();
@@ -70,15 +74,15 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function requestShouldEmitErrorIfConnectionClosesBeforeResponseIsParsed()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
+        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf(\RuntimeException::class)));
         $request->on('close', $this->expectCallableOnce());
 
         $request->end();
@@ -88,15 +92,15 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function requestShouldEmitErrorIfConnectionEmitsError()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf('Exception')));
+        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf(\Exception::class)));
         $request->on('close', $this->expectCallableOnce());
 
         $request->end();
@@ -107,43 +111,41 @@ class ClientRequestStreamTest extends TestCase
     {
         $request = new Request('GET' , "http://localhost/");
 
-        return [
-            [
-                $request->withMethod("INVA\r\nLID", '')
-            ],
-            [
-                $request->withRequestTarget('/inva lid')
-            ],
-            [
-                $request->withHeader('Invalid', "Yes\r\n")
-            ],
-            [
-                $request->withHeader('Invalid', "Yes\n")
-            ],
-            [
-                $request->withHeader('Invalid', "Yes\r")
-            ],
-            [
-                $request->withHeader("Inva\r\nlid", 'Yes')
-            ],
-            [
-                $request->withHeader("Inva\nlid", 'Yes')
-            ],
-            [
-                $request->withHeader("Inva\rlid", 'Yes')
-            ],
-            [
-                $request->withHeader('Inva Lid', 'Yes')
-            ],
-            [
-                $request->withHeader('Inva:Lid', 'Yes')
-            ],
-            [
-                $request->withHeader('Invalid', "Val\0ue")
-            ],
-            [
-                $request->withHeader("Inva\0lid", 'Yes')
-            ]
+        yield [
+            $request->withMethod("INVA\r\nLID", '')
+        ];
+        yield [
+            $request->withRequestTarget('/inva lid')
+        ];
+        yield [
+            $request->withHeader('Invalid', "Yes\r\n")
+        ];
+        yield [
+            $request->withHeader('Invalid', "Yes\n")
+        ];
+        yield [
+            $request->withHeader('Invalid', "Yes\r")
+        ];
+        yield [
+            $request->withHeader("Inva\r\nlid", 'Yes')
+        ];
+        yield [
+            $request->withHeader("Inva\nlid", 'Yes')
+        ];
+        yield [
+            $request->withHeader("Inva\rlid", 'Yes')
+        ];
+        yield [
+            $request->withHeader('Inva Lid', 'Yes')
+        ];
+        yield [
+            $request->withHeader('Inva:Lid', 'Yes')
+        ];
+        yield [
+            $request->withHeader('Invalid', "Val\0ue")
+        ];
+        yield [
+            $request->withHeader("Inva\0lid", 'Yes')
         ];
     }
 
@@ -153,12 +155,12 @@ class ClientRequestStreamTest extends TestCase
      */
     public function testStreamShouldEmitErrorBeforeCreatingConnectionWhenRequestIsInvalid(RequestInterface $request)
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->never())->method('connect');
 
         $stream = new ClientRequestStream($connectionManager, $request);
 
-        $stream->on('error', $this->expectCallableOnceWith($this->isInstanceOf('InvalidArgumentException')));
+        $stream->on('error', $this->expectCallableOnceWith($this->isInstanceOf(\InvalidArgumentException::class)));
         $stream->on('close', $this->expectCallableOnce());
 
         $stream->end();
@@ -167,15 +169,15 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function requestShouldEmitErrorIfRequestParserThrowsException()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf('InvalidArgumentException')));
+        $request->on('error', $this->expectCallableOnceWith($this->isInstanceOf(\InvalidArgumentException::class)));
         $request->on('close', $this->expectCallableOnce());
 
         $request->end();
@@ -185,10 +187,10 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function getRequestShouldSendAGetRequest()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n");
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', [], '', '1.0');
@@ -200,10 +202,10 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function getHttp11RequestShouldSendAGetRequestWithGivenConnectionCloseHeader()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -215,10 +217,10 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function getOptionsAsteriskShouldSendAOptionsRequestAsteriskRequestTarget()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("OPTIONS * HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('OPTIONS', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -230,11 +232,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithEmptyBodyWhenResponseContainsContentLengthZero()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -254,11 +256,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithEmptyBodyWhenResponseContainsStatusNoContent()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -278,11 +280,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithEmptyBodyWhenResponseContainsStatusNotModifiedWithContentLengthGiven()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -302,11 +304,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithEmptyBodyWhenRequestMethodIsHead()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("HEAD / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('HEAD', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -326,11 +328,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyUntilEndWhenResponseContainsContentLengthAndResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -350,11 +352,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyWithoutDataWhenResponseContainsContentLengthWithoutResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -374,11 +376,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyWithDataWithoutEndWhenResponseContainsContentLengthWithIncompleteResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -398,11 +400,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyUntilEndWhenResponseContainsTransferEncodingChunkedAndResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -422,11 +424,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyWithoutDataWhenResponseContainsTransferEncodingChunkedWithoutResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -446,11 +448,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyWithDataWithoutEndWhenResponseContainsTransferEncodingChunkedWithIncompleteResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -470,11 +472,11 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyWithDataWithoutEndWhenResponseContainsNoContentLengthAndIncompleteResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -494,7 +496,7 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldEmitResponseWithStreamingBodyUntilEndWhenResponseContainsNoContentLengthAndResponseBodyTerminatedByConnectionEndEvent()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n");
         $connection->expects($this->once())->method('close');
 
@@ -510,7 +512,7 @@ class ClientRequestStreamTest extends TestCase
             return true;
         }));
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'close'], '', '1.1');
@@ -533,12 +535,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldReuseConnectionForHttp11ByDefault()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
@@ -554,12 +556,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldNotReuseConnectionWhenResponseContainsConnectionClose()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
@@ -574,12 +576,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldNotReuseConnectionWhenRequestContainsConnectionCloseWithAdditionalOptions()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: FOO, CLOSE, BAR\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', ['Connection' => 'FOO, CLOSE, BAR'], '', '1.1');
@@ -594,12 +596,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldNotReuseConnectionForHttp10ByDefault()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', [], '', '1.0');
@@ -614,12 +616,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldReuseConnectionForHttp10WhenBothRequestAndResponseContainConnectionKeepAlive()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.0\r\nHost: www.example.com\r\nConnection: keep-alive\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
@@ -635,12 +637,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldReuseConnectionForHttp10WhenBothRequestAndResponseContainConnectionKeepAliveWithAdditionalOptions()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.0\r\nHost: www.example.com\r\nConnection: FOO, KEEP-ALIVE, BAR\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
@@ -656,7 +658,7 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldNotReuseConnectionWhenResponseContainsNoContentLengthAndResponseBodyTerminatedByConnectionEndEvent()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(false);
         $connection->expects($this->once())->method('close');
@@ -673,7 +675,7 @@ class ClientRequestStreamTest extends TestCase
             return true;
         }));
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
@@ -691,7 +693,7 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldNotReuseConnectionWhenResponseContainsContentLengthButIsTerminatedByUnexpectedCloseEvent()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->atMost(1))->method('isReadable')->willReturn(false);
         $connection->expects($this->once())->method('close');
@@ -708,7 +710,7 @@ class ClientRequestStreamTest extends TestCase
             return true;
         }));
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
@@ -726,12 +728,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldReuseConnectionWhenResponseContainsTransferEncodingChunkedAndResponseBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->once())->method('isReadable')->willReturn(true);
         $connection->expects($this->never())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
         $connectionManager->expects($this->once())->method('keepAlive')->with(new Uri('http://www.example.com'), $connection);
 
@@ -747,12 +749,12 @@ class ClientRequestStreamTest extends TestCase
 
     public function testStreamShouldNotReuseConnectionWhenResponseContainsTransferEncodingChunkedAndResponseBodyContainsInvalidData()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with("GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
         $connection->expects($this->atMost(1))->method('isReadable')->willReturn(true);
         $connection->expects($this->once())->method('close');
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com', [], '', '1.1');
@@ -768,10 +770,10 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function postRequestShouldSendAPostRequest()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('write')->with($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome post data$#"));
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
@@ -787,14 +789,14 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function writeWithAPostRequestShouldSendToTheStream()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->exactly(3))->method('write')->withConsecutive(
             [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")],
             [$this->identicalTo("post")],
             [$this->identicalTo("data")]
         );
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
@@ -812,7 +814,7 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function writeWithAPostRequestShouldSendBodyAfterHeadersAndEmitDrainEvent()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->exactly(2))->method('write')->withConsecutive(
             [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")],
             [$this->identicalTo("data")]
@@ -821,7 +823,7 @@ class ClientRequestStreamTest extends TestCase
         );
 
         $deferred = new Deferred();
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
         $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
@@ -846,7 +848,7 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function writeWithAPostRequestShouldForwardDrainEventIfFirstChunkExceedsBuffer()
     {
-        $connection = $this->getMockBuilder('React\Socket\Connection')
+        $connection = $this->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
             ->setMethods(['write'])
             ->getMock();
@@ -859,7 +861,7 @@ class ClientRequestStreamTest extends TestCase
         );
 
         $deferred = new Deferred();
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
         $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
@@ -885,22 +887,20 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function pipeShouldPipeDataIntoTheRequestBody()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->exactly(3))->method('write')->withConsecutive(
             [$this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")],
             [$this->identicalTo("post")],
             [$this->identicalTo("data")]
         );
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('POST', 'http://www.example.com', [], '', '1.0');
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $loop = $this
-            ->getMockBuilder('React\EventLoop\LoopInterface')
-            ->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $stream = fopen('php://memory', 'r+');
         $stream = new DuplexResourceStream($stream, $loop);
@@ -920,7 +920,7 @@ class ClientRequestStreamTest extends TestCase
      */
     public function writeShouldStartConnecting()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(new Promise(function () { }));
 
         $requestData = new Request('POST', 'http://www.example.com');
@@ -934,7 +934,7 @@ class ClientRequestStreamTest extends TestCase
      */
     public function endShouldStartConnectingAndChangeStreamIntoNonWritableMode()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(new Promise(function () { }));
 
         $requestData = new Request('POST', 'http://www.example.com');
@@ -950,7 +950,7 @@ class ClientRequestStreamTest extends TestCase
      */
     public function closeShouldEmitCloseEvent()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
 
         $requestData = new Request('POST', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -964,7 +964,7 @@ class ClientRequestStreamTest extends TestCase
      */
     public function writeAfterCloseReturnsFalse()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
 
         $requestData = new Request('POST', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -980,7 +980,7 @@ class ClientRequestStreamTest extends TestCase
      */
     public function endAfterCloseIsNoOp()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->never())->method('connect');
 
         $requestData = new Request('POST', 'http://www.example.com');
@@ -998,7 +998,7 @@ class ClientRequestStreamTest extends TestCase
         $promise = new Promise(function () {}, function () {
             throw new \RuntimeException();
         });
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn($promise);
 
         $requestData = new Request('POST', 'http://www.example.com');
@@ -1016,7 +1016,7 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function requestShouldRemoveAllListenerAfterClosed()
     {
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
 
         $requestData = new Request('GET', 'http://www.example.com');
         $request = new ClientRequestStream($connectionManager, $requestData);
@@ -1031,9 +1031,9 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function multivalueHeader()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
 
-        $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
+        $connectionManager = $this->createMock(ClientConnectionManager::class);
         $connectionManager->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $requestData = new Request('GET', 'http://www.example.com');
@@ -1054,7 +1054,7 @@ class ClientRequestStreamTest extends TestCase
         $request->handleData("\r\nbody");
 
         /** @var \Psr\Http\Message\ResponseInterface $response */
-        $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $response);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals('1.0', $response->getProtocolVersion());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());

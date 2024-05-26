@@ -3,8 +3,11 @@
 namespace React\Tests\Http;
 
 use Psr\Http\Message\RequestInterface;
+use React\EventLoop\LoopInterface;
+use React\Http\Io\Transaction;
 use React\Http\Browser;
 use React\Promise\Promise;
+use React\Socket\ConnectorInterface;
 
 class BrowserTest extends TestCase
 {
@@ -17,8 +20,8 @@ class BrowserTest extends TestCase
      */
     public function setUpBrowser()
     {
-        $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $this->sender = $this->getMockBuilder('React\Http\Io\Transaction')->disableOriginalConstructor()->getMock();
+        $this->loop = $this->createMock(LoopInterface::class);
+        $this->sender = $this->createMock(Transaction::class);
         $this->browser = new Browser(null, $this->loop);
 
         $ref = new \ReflectionProperty($this->browser, 'transaction');
@@ -38,12 +41,12 @@ class BrowserTest extends TestCase
         $ref->setAccessible(true);
         $loop = $ref->getValue($transaction);
 
-        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+        $this->assertInstanceOf(LoopInterface::class, $loop);
     }
 
     public function testConstructWithConnectorAssignsGivenConnector()
     {
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
 
         $browser = new Browser($connector);
 
@@ -250,108 +253,106 @@ class BrowserTest extends TestCase
     {
         $browser = $this->browser->withBase('http://example.com/root');
 
-        $this->assertInstanceOf('React\Http\Browser', $browser);
+        $this->assertInstanceOf(Browser::class, $browser);
         $this->assertNotSame($this->browser, $browser);
     }
 
-    public function provideOtherUris()
+    public static function provideOtherUris()
     {
-        return [
-            'empty returns base' => [
-                'http://example.com/base',
-                '',
-                'http://example.com/base',
-            ],
-            'absolute same as base returns base' => [
-                'http://example.com/base',
-                'http://example.com/base',
-                'http://example.com/base',
-            ],
-            'absolute below base returns absolute' => [
-                'http://example.com/base',
-                'http://example.com/base/another',
-                'http://example.com/base/another',
-            ],
-            'slash returns base without path' => [
-                'http://example.com/base',
-                '/',
-                'http://example.com/',
-            ],
-            'relative is added behind base' => [
-                'http://example.com/base/',
-                'test',
-                'http://example.com/base/test',
-            ],
-            'relative is added behind base without path' => [
-                'http://example.com/base',
-                'test',
-                'http://example.com/test',
-            ],
-            'relative level up is added behind parent path' => [
-                'http://example.com/base/foo/',
-                '../bar',
-                'http://example.com/base/bar',
-            ],
-            'absolute with slash is added behind base without path' => [
-                'http://example.com/base',
-                '/test',
-                'http://example.com/test',
-            ],
-            'query string is added behind base' => [
-                'http://example.com/base',
-                '?key=value',
-                'http://example.com/base?key=value',
-            ],
-            'query string is added behind base with slash' => [
-                'http://example.com/base/',
-                '?key=value',
-                'http://example.com/base/?key=value',
-            ],
-            'query string with slash is added behind base without path' => [
-                'http://example.com/base',
-                '/?key=value',
-                'http://example.com/?key=value',
-            ],
-            'absolute with query string below base is returned as-is' => [
-                'http://example.com/base',
-                'http://example.com/base?test',
-                'http://example.com/base?test',
-            ],
-            'urlencoded special chars will stay as-is' => [
-                'http://example.com/%7Bversion%7D/',
-                '',
-                'http://example.com/%7Bversion%7D/'
-            ],
-            'special chars will be urlencoded' => [
-                'http://example.com/{version}/',
-                '',
-                'http://example.com/%7Bversion%7D/'
-            ],
-            'other domain' => [
-                'http://example.com/base/',
-                'http://example.org/base/',
-                'http://example.org/base/'
-            ],
-            'other scheme' => [
-                'http://example.com/base/',
-                'https://example.com/base/',
-                'https://example.com/base/'
-            ],
-            'other port' => [
-                'http://example.com/base/',
-                'http://example.com:81/base/',
-                'http://example.com:81/base/'
-            ],
-            'other path' => [
-                'http://example.com/base/',
-                'http://example.com/other/',
-                'http://example.com/other/'
-            ],
-            'other path due to missing slash' => [
-                'http://example.com/base/',
-                'http://example.com/other',
-                'http://example.com/other'
-            ],
+        yield 'empty returns base' => [
+            'http://example.com/base',
+            '',
+            'http://example.com/base',
+        ];
+        yield 'absolute same as base returns base' => [
+            'http://example.com/base',
+            'http://example.com/base',
+            'http://example.com/base',
+        ];
+        yield 'absolute below base returns absolute' => [
+            'http://example.com/base',
+            'http://example.com/base/another',
+            'http://example.com/base/another',
+        ];
+        yield 'slash returns base without path' => [
+            'http://example.com/base',
+            '/',
+            'http://example.com/',
+        ];
+        yield 'relative is added behind base' => [
+            'http://example.com/base/',
+            'test',
+            'http://example.com/base/test',
+        ];
+        yield 'relative is added behind base without path' => [
+            'http://example.com/base',
+            'test',
+            'http://example.com/test',
+        ];
+        yield 'relative level up is added behind parent path' => [
+            'http://example.com/base/foo/',
+            '../bar',
+            'http://example.com/base/bar',
+        ];
+        yield 'absolute with slash is added behind base without path' => [
+            'http://example.com/base',
+            '/test',
+            'http://example.com/test',
+        ];
+        yield 'query string is added behind base' => [
+            'http://example.com/base',
+            '?key=value',
+            'http://example.com/base?key=value',
+        ];
+        yield 'query string is added behind base with slash' => [
+            'http://example.com/base/',
+            '?key=value',
+            'http://example.com/base/?key=value',
+        ];
+        yield 'query string with slash is added behind base without path' => [
+            'http://example.com/base',
+            '/?key=value',
+            'http://example.com/?key=value',
+        ];
+        yield 'absolute with query string below base is returned as-is' => [
+            'http://example.com/base',
+            'http://example.com/base?test',
+            'http://example.com/base?test',
+        ];
+        yield 'urlencoded special chars will stay as-is' => [
+            'http://example.com/%7Bversion%7D/',
+            '',
+            'http://example.com/%7Bversion%7D/'
+        ];
+        yield 'special chars will be urlencoded' => [
+            'http://example.com/{version}/',
+            '',
+            'http://example.com/%7Bversion%7D/'
+        ];
+        yield 'other domain' => [
+            'http://example.com/base/',
+            'http://example.org/base/',
+            'http://example.org/base/'
+        ];
+        yield 'other scheme' => [
+            'http://example.com/base/',
+            'https://example.com/base/',
+            'https://example.com/base/'
+        ];
+        yield 'other port' => [
+            'http://example.com/base/',
+            'http://example.com:81/base/',
+            'http://example.com:81/base/'
+        ];
+        yield 'other path' => [
+            'http://example.com/base/',
+            'http://example.com/other/',
+            'http://example.com/other/'
+        ];
+        yield 'other path due to missing slash' => [
+            'http://example.com/base/',
+            'http://example.com/other',
+            'http://example.com/other'
         ];
     }
 
@@ -374,13 +375,13 @@ class BrowserTest extends TestCase
 
     public function testWithBaseUrlNotAbsoluteFails()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $this->browser->withBase('hello');
     }
 
     public function testWithBaseUrlInvalidSchemeFails()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $this->browser->withBase('ftp://example.com');
     }
 
@@ -410,7 +411,7 @@ class BrowserTest extends TestCase
 
     public function testWithProtocolVersionInvalidThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $this->browser->withProtocolVersion('1.2');
     }
 
@@ -418,7 +419,7 @@ class BrowserTest extends TestCase
     {
         $pending = new Promise(function () { }, $this->expectCallableOnce());
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($pending);
 
         $this->browser = new Browser($connector, $this->loop);

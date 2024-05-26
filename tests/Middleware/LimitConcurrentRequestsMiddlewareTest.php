@@ -10,6 +10,7 @@ use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 
@@ -114,7 +115,8 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
     {
         $middleware = new LimitConcurrentRequestsMiddleware(1);
 
-        $this->setExpectedException('RuntimeException', 'demo');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('demo');
         $middleware(new ServerRequest('GET', 'https://example.com/'), function () {
             throw new \RuntimeException('demo');
         });
@@ -124,7 +126,8 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
     {
         $middleware = new LimitConcurrentRequestsMiddleware(1);
 
-        $this->setExpectedException('Error', 'demo');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('demo');
         $middleware(new ServerRequest('GET', 'https://example.com/'), function () {
             throw new \Error('demo');
         });
@@ -159,7 +162,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
 
     public function testStreamDoesNotPauseOrResumeWhenBelowLimit()
     {
-        $body = $this->getMockBuilder('React\Http\Io\HttpBodyStream')->disableOriginalConstructor()->getMock();
+        $body = $this->createMock(HttpBodyStream::class);
         $body->expects($this->never())->method('pause');
         $body->expects($this->never())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
@@ -168,7 +171,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
 
     public function testStreamDoesPauseWhenAboveLimit()
     {
-        $body = $this->getMockBuilder('React\Http\Io\HttpBodyStream')->disableOriginalConstructor()->getMock();
+        $body = $this->createMock(HttpBodyStream::class);
         $body->expects($this->once())->method('pause');
         $body->expects($this->never())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
@@ -182,7 +185,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
 
     public function testStreamDoesPauseAndThenResumeWhenDequeued()
     {
-        $body = $this->getMockBuilder('React\Http\Io\HttpBodyStream')->disableOriginalConstructor()->getMock();
+        $body = $this->createMock(HttpBodyStream::class);
         $body->expects($this->once())->method('pause');
         $body->expects($this->once())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
@@ -467,11 +470,11 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $deferred->reject(new \RuntimeException());
 
         $this->assertNotSame($request, $req);
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $req);
+        $this->assertInstanceOf(ServerRequestInterface::class, $req);
 
         $body = $req->getBody();
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
-        /* @var $body \React\Stream\ReadableStreamInterface */
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
+        /* @var $body ReadableStreamInterface */
 
         $this->assertEquals(5, $body->getSize());
 

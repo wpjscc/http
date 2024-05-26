@@ -43,8 +43,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -70,7 +70,7 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 404 Not Found", $response);
+        $this->assertStringContainsString("HTTP/1.0 404 Not Found", $response);
 
         $socket->close();
     }
@@ -94,8 +94,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -119,8 +119,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://localhost:1000/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://localhost:1000/', $response);
 
         $socket->close();
     }
@@ -150,8 +150,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -181,8 +181,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString("\r\nContent-Length: 33000\r\n", $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString("\r\nContent-Length: 33000\r\n", $response);
         $this->assertStringEndsWith("\r\n". str_repeat('.', 33000), $response);
 
         $socket->close();
@@ -211,8 +211,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -240,8 +240,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://127.0.0.1/', $response);
 
         $socket->close();
     }
@@ -269,8 +269,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://127.0.0.1/', $response);
 
         $socket->close();
     }
@@ -303,8 +303,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://127.0.0.1/', $response);
 
         $socket->close();
     }
@@ -337,8 +337,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://127.0.0.1/', $response);
 
         $socket->close();
     }
@@ -366,8 +366,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://127.0.0.1:443/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://127.0.0.1:443/', $response);
 
         $socket->close();
     }
@@ -400,8 +400,8 @@ class FunctionalHttpServerTest extends TestCase
 
         $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://127.0.0.1:80/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://127.0.0.1:80/', $response);
 
         $socket->close();
     }
@@ -743,7 +743,7 @@ class FunctionalHttpServerTest extends TestCase
         $responses = await(timeout(all($result), 1.0));
 
         foreach ($responses as $response) {
-            $this->assertContainsString("HTTP/1.0 200 OK", $response, $response);
+            $this->assertStringContainsString("HTTP/1.0 200 OK", $response, $response);
             $this->assertTrue(substr($response, -4) == 1024, $response);
         }
 

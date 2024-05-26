@@ -4,11 +4,14 @@ namespace React\Tests\Http\Io;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamInterface;
 use React\EventLoop\Loop;
+use React\Http\Io\RequestHeaderParser;
 use React\Http\Io\StreamingServer;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Promise\Promise;
+use React\Socket\Connection;
 use React\Stream\ThroughStream;
 use React\Tests\Http\SocketServerStub;
 use React\Tests\Http\TestCase;
@@ -35,7 +38,7 @@ class StreamingServerTest extends TestCase
 
     private function mockConnection(array $additionalMethods = null)
     {
-        $connection = $this->getMockBuilder('React\Socket\Connection')
+        $connection = $this->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
             ->setMethods(array_merge(
                 [
@@ -125,7 +128,7 @@ class StreamingServerTest extends TestCase
         $serverParams = $requestAssertion->getServerParams();
 
         $this->assertSame(1, $i);
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
@@ -158,7 +161,7 @@ class StreamingServerTest extends TestCase
         $serverParams = $requestAssertion->getServerParams();
 
         $this->assertSame(1, $i);
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
@@ -181,7 +184,7 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: example.com:8080\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
@@ -203,7 +206,7 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: example.com:443\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
@@ -225,7 +228,7 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
@@ -247,7 +250,7 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.0\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/', $requestAssertion->getRequestTarget());
         $this->assertSame('/', $requestAssertion->getUri()->getPath());
@@ -282,7 +285,7 @@ class StreamingServerTest extends TestCase
         $data = "OPTIONS * HTTP/1.1\r\nHost: example.com\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('OPTIONS', $requestAssertion->getMethod());
         $this->assertSame('*', $requestAssertion->getRequestTarget());
         $this->assertSame('', $requestAssertion->getUri()->getPath());
@@ -315,7 +318,7 @@ class StreamingServerTest extends TestCase
         $data = "CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
         $this->assertSame('example.com:443', $requestAssertion->getRequestTarget());
         $this->assertSame('', $requestAssertion->getUri()->getPath());
@@ -337,7 +340,7 @@ class StreamingServerTest extends TestCase
         $data = "CONNECT example.com:443 HTTP/1.1\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
         $this->assertSame('example.com:443', $requestAssertion->getRequestTarget());
         $this->assertSame('', $requestAssertion->getUri()->getPath());
@@ -359,7 +362,7 @@ class StreamingServerTest extends TestCase
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
         $this->assertSame('example.com:80', $requestAssertion->getRequestTarget());
         $this->assertSame('', $requestAssertion->getUri()->getPath());
@@ -381,7 +384,7 @@ class StreamingServerTest extends TestCase
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: other.example.org\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('CONNECT', $requestAssertion->getMethod());
         $this->assertSame('example.com:80', $requestAssertion->getRequestTarget());
         $this->assertSame('', $requestAssertion->getUri()->getPath());
@@ -433,7 +436,7 @@ class StreamingServerTest extends TestCase
         $data = "GET /test HTTP/1.0\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('/test', $requestAssertion->getRequestTarget());
         $this->assertEquals('http://127.0.0.1/test', $requestAssertion->getUri());
@@ -454,7 +457,7 @@ class StreamingServerTest extends TestCase
         $data = "GET http://example.com/test HTTP/1.1\r\nHost: example.com\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('http://example.com/test', $requestAssertion->getRequestTarget());
         $this->assertEquals('http://example.com/test', $requestAssertion->getUri());
@@ -476,7 +479,7 @@ class StreamingServerTest extends TestCase
         $data = "GET http://example.com/test HTTP/1.1\r\nHost: other.example.org\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
         $this->assertSame('http://example.com/test', $requestAssertion->getRequestTarget());
         $this->assertEquals('http://example.com/test', $requestAssertion->getUri());
@@ -510,7 +513,7 @@ class StreamingServerTest extends TestCase
         $data = "OPTIONS * HTTP/1.1\r\nHost: example.com\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('OPTIONS', $requestAssertion->getMethod());
         $this->assertSame('*', $requestAssertion->getRequestTarget());
         $this->assertEquals('http://example.com', $requestAssertion->getUri());
@@ -532,7 +535,7 @@ class StreamingServerTest extends TestCase
         $data = "OPTIONS http://example.com HTTP/1.1\r\nHost: example.com\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $requestAssertion);
+        $this->assertInstanceOf(ServerRequestInterface::class, $requestAssertion);
         $this->assertSame('OPTIONS', $requestAssertion->getMethod());
         $this->assertSame('http://example.com', $requestAssertion->getRequestTarget());
         $this->assertEquals('http://example.com', $requestAssertion->getUri());
@@ -698,12 +701,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -712,7 +713,7 @@ class StreamingServerTest extends TestCase
         $data = $this->createGetRequest();
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("\r\nServer: ReactPHP/1\r\n", $buffer);
+        $this->assertStringContainsString("\r\nServer: ReactPHP/1\r\n", $buffer);
     }
 
     public function testResponsePendingPromiseWillNotSendAnything()
@@ -728,12 +729,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -758,12 +757,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -794,12 +791,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -829,12 +824,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -867,12 +860,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -903,15 +894,13 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
-        $this->connection = $this->getMockBuilder('React\Socket\Connection')
+        $this->connection = $this->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
             ->setMethods(
                 [
@@ -980,12 +969,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1015,12 +1002,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1053,12 +1038,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1091,12 +1074,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1128,12 +1109,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1185,12 +1164,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1199,8 +1176,8 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("bye", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("bye", $buffer);
     }
 
     public function testResponseContainsSameRequestProtocolVersionAndRawBodyForHttp10()
@@ -1218,12 +1195,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1232,9 +1207,9 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.0\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.0 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("bye", $buffer);
+        $this->assertStringContainsString("HTTP/1.0 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("bye", $buffer);
     }
 
     public function testResponseContainsNoResponseBodyForHeadRequest()
@@ -1251,12 +1226,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1265,9 +1238,9 @@ class StreamingServerTest extends TestCase
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
-        $this->assertNotContainsString("bye", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringNotContainsString("bye", $buffer);
     }
 
     public function testResponseContainsNoResponseBodyForHeadRequestWithStreamingResponse()
@@ -1287,12 +1260,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1301,8 +1272,8 @@ class StreamingServerTest extends TestCase
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("\r\nContent-Length: 3\r\n", $buffer);
     }
 
     public function testResponseContainsNoResponseBodyAndNoContentLengthForNoContentStatus()
@@ -1319,12 +1290,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1333,9 +1302,9 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
-        $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
-        $this->assertNotContainsString("bye", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
+        $this->assertStringNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringNotContainsString("bye", $buffer);
     }
 
     public function testResponseContainsNoResponseBodyAndNoContentLengthForNoContentStatusResponseWithStreamingBody()
@@ -1355,12 +1324,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1369,8 +1336,8 @@ class StreamingServerTest extends TestCase
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
-        $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
+        $this->assertStringNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
     }
 
     public function testResponseContainsNoContentLengthHeaderForNotModifiedStatus()
@@ -1387,12 +1354,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1401,8 +1366,8 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertNotContainsString("\r\nContent-Length: 0\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
+        $this->assertStringNotContainsString("\r\nContent-Length: 0\r\n", $buffer);
     }
 
     public function testResponseContainsExplicitContentLengthHeaderForNotModifiedStatus()
@@ -1419,12 +1384,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1433,8 +1396,8 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
+        $this->assertStringContainsString("\r\nContent-Length: 3\r\n", $buffer);
     }
 
     public function testResponseContainsExplicitContentLengthHeaderForHeadRequests()
@@ -1451,12 +1414,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1465,8 +1426,8 @@ class StreamingServerTest extends TestCase
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("\r\nContent-Length: 3\r\n", $buffer);
     }
 
     public function testResponseContainsNoResponseBodyForNotModifiedStatus()
@@ -1483,12 +1444,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1497,9 +1456,9 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
-        $this->assertNotContainsString("bye", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
+        $this->assertStringContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringNotContainsString("bye", $buffer);
     }
 
     public function testResponseContainsNoResponseBodyForNotModifiedStatusWithStreamingBody()
@@ -1519,12 +1478,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1533,8 +1490,8 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
+        $this->assertStringContainsString("\r\nContent-Length: 3\r\n", $buffer);
     }
 
     public function testRequestInvalidHttpProtocolVersionWillEmitErrorAndSendErrorResponse()
@@ -1550,12 +1507,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1564,11 +1519,11 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.2\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('InvalidArgumentException', $error);
+        $this->assertInstanceOf(\InvalidArgumentException::class, $error);
 
-        $this->assertContainsString("HTTP/1.1 505 HTTP Version Not Supported\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("Error 505: HTTP Version Not Supported", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 505 HTTP Version Not Supported\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("Error 505: HTTP Version Not Supported", $buffer);
     }
 
     public function testRequestOverflowWillEmitErrorAndSendErrorResponse()
@@ -1584,12 +1539,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1599,10 +1552,10 @@ class StreamingServerTest extends TestCase
         $data .= str_repeat('A', 8193 - strlen($data)) . "\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('OverflowException', $error);
+        $this->assertInstanceOf(\OverflowException::class, $error);
 
-        $this->assertContainsString("HTTP/1.1 431 Request Header Fields Too Large\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\nError 431: Request Header Fields Too Large", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 431 Request Header Fields Too Large\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\nError 431: Request Header Fields Too Large", $buffer);
     }
 
     public function testRequestInvalidWillEmitErrorAndSendErrorResponse()
@@ -1618,12 +1571,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -1632,10 +1583,10 @@ class StreamingServerTest extends TestCase
         $data = "bad request\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('InvalidArgumentException', $error);
+        $this->assertInstanceOf(\InvalidArgumentException::class, $error);
 
-        $this->assertContainsString("HTTP/1.1 400 Bad Request\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\nError 400: Bad Request", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 400 Bad Request\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\nError 400: Bad Request", $buffer);
     }
 
     public function testRequestContentLengthBodyDataWillEmitDataEventOnRequestStream()
@@ -1959,7 +1910,7 @@ class StreamingServerTest extends TestCase
 
     public function testRequestInvalidChunkHeaderTooLongWillEmitErrorOnRequestStream()
     {
-        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf('Exception'));
+        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf(\Exception::class));
         $server = new StreamingServer(Loop::get(), function ($request) use ($errorEvent){
             $request->getBody()->on('error', $errorEvent);
             return resolve(new Response());
@@ -1984,7 +1935,7 @@ class StreamingServerTest extends TestCase
 
     public function testRequestInvalidChunkBodyTooLongWillEmitErrorOnRequestStream()
     {
-        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf('Exception'));
+        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf(\Exception::class));
         $server = new StreamingServer(Loop::get(), function ($request) use ($errorEvent){
             $request->getBody()->on('error', $errorEvent);
         });
@@ -2006,7 +1957,7 @@ class StreamingServerTest extends TestCase
 
     public function testRequestUnexpectedEndOfRequestWithChunkedTransferConnectionWillEmitErrorOnRequestStream()
     {
-        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf('Exception'));
+        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf(\Exception::class));
         $server = new StreamingServer(Loop::get(), function ($request) use ($errorEvent){
             $request->getBody()->on('error', $errorEvent);
         });
@@ -2029,7 +1980,7 @@ class StreamingServerTest extends TestCase
 
     public function testRequestInvalidChunkHeaderWillEmitErrorOnRequestStream()
     {
-        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf('Exception'));
+        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf(\Exception::class));
         $server = new StreamingServer(Loop::get(), function ($request) use ($errorEvent){
             $request->getBody()->on('error', $errorEvent);
         });
@@ -2051,7 +2002,7 @@ class StreamingServerTest extends TestCase
 
     public function testRequestUnexpectedEndOfRequestWithContentLengthWillEmitErrorOnRequestStream()
     {
-        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf('Exception'));
+        $errorEvent = $this->expectCallableOnceWith($this->isInstanceOf(\Exception::class));
         $server = new StreamingServer(Loop::get(), function ($request) use ($errorEvent){
             $request->getBody()->on('error', $errorEvent);
         });
@@ -2134,12 +2085,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2150,8 +2099,8 @@ class StreamingServerTest extends TestCase
         $this->connection->emit('data', [$data]);
         $stream->emit('data', ['hello']);
 
-        $this->assertContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertStringContainsString("Transfer-Encoding: chunked", $buffer);
+        $this->assertStringContainsString("hello", $buffer);
     }
 
     public function testResponseWithBodyStringWillOverwriteExplicitContentLengthAndTransferEncoding()
@@ -2171,12 +2120,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2186,14 +2133,14 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertNotContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertContainsString("Content-Length: 5", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertStringNotContainsString("Transfer-Encoding: chunked", $buffer);
+        $this->assertStringContainsString("Content-Length: 5", $buffer);
+        $this->assertStringContainsString("hello", $buffer);
     }
 
     public function testResponseContainsResponseBodyWithTransferEncodingChunkedForBodyWithUnknownSize()
     {
-        $body = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body = $this->createMock(StreamInterface::class);
         $body->expects($this->once())->method('getSize')->willReturn(null);
         $body->expects($this->once())->method('__toString')->willReturn('body');
 
@@ -2209,12 +2156,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2223,14 +2168,14 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertNotContainsString("Content-Length:", $buffer);
-        $this->assertContainsString("body", $buffer);
+        $this->assertStringContainsString("Transfer-Encoding: chunked", $buffer);
+        $this->assertStringNotContainsString("Content-Length:", $buffer);
+        $this->assertStringContainsString("body", $buffer);
     }
 
     public function testResponseContainsResponseBodyWithPlainBodyWithUnknownSizeForLegacyHttp10()
     {
-        $body = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body = $this->createMock(StreamInterface::class);
         $body->expects($this->once())->method('getSize')->willReturn(null);
         $body->expects($this->once())->method('__toString')->willReturn('body');
 
@@ -2246,12 +2191,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2260,9 +2203,9 @@ class StreamingServerTest extends TestCase
         $data = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', [$data]);
 
-        $this->assertNotContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertNotContainsString("Content-Length:", $buffer);
-        $this->assertContainsString("body", $buffer);
+        $this->assertStringNotContainsString("Transfer-Encoding: chunked", $buffer);
+        $this->assertStringNotContainsString("Content-Length:", $buffer);
+        $this->assertStringContainsString("body", $buffer);
     }
 
     public function testResponseWithCustomTransferEncodingWillBeIgnoredAndUseChunkedTransferEncodingInstead()
@@ -2282,12 +2225,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2298,9 +2239,9 @@ class StreamingServerTest extends TestCase
         $this->connection->emit('data', [$data]);
         $stream->emit('data', ['hello']);
 
-        $this->assertContainsString('Transfer-Encoding: chunked', $buffer);
-        $this->assertNotContainsString('Transfer-Encoding: custom', $buffer);
-        $this->assertContainsString("5\r\nhello\r\n", $buffer);
+        $this->assertStringContainsString('Transfer-Encoding: chunked', $buffer);
+        $this->assertStringNotContainsString('Transfer-Encoding: custom', $buffer);
+        $this->assertStringContainsString("5\r\nhello\r\n", $buffer);
     }
 
     public function testResponseWithoutExplicitDateHeaderWillAddCurrentDateFromClock()
@@ -2321,12 +2262,10 @@ class StreamingServerTest extends TestCase
             $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2336,9 +2275,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Date: Thu, 19 May 2022 14:54:51 GMT\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("Date: Thu, 19 May 2022 14:54:51 GMT\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
     }
 
     public function testResponseWithCustomDateHeaderOverwritesDefault()
@@ -2354,12 +2293,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2369,9 +2306,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Date: Tue, 15 Nov 1994 08:12:31 GMT\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("Date: Tue, 15 Nov 1994 08:12:31 GMT\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
     }
 
     public function testResponseWithEmptyDateHeaderRemovesDateHeader()
@@ -2387,12 +2324,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2402,9 +2337,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertNotContainsString("Date:", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringNotContainsString("Date:", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
     }
 
     public function testResponseCanContainMultipleCookieHeaders()
@@ -2427,12 +2362,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2455,12 +2388,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2473,8 +2404,8 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
 
         $this->connection->emit('data', [$data]);
-        $this->assertContainsString("HTTP/1.1 100 Continue\r\n", $buffer);
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 100 Continue\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
     }
 
     public function testResponseWithExpectContinueRequestWontSendContinueForHttp10()
@@ -2487,12 +2418,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2503,13 +2432,13 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
 
         $this->connection->emit('data', [$data]);
-        $this->assertContainsString("HTTP/1.0 200 OK\r\n", $buffer);
-        $this->assertNotContainsString("HTTP/1.1 100 Continue\r\n\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.0 200 OK\r\n", $buffer);
+        $this->assertStringNotContainsString("HTTP/1.1 100 Continue\r\n\r\n", $buffer);
     }
 
     public function testInvalidCallbackFunctionLeadsToException()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new StreamingServer(Loop::get(), 'invalid');
     }
 
@@ -2529,12 +2458,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2546,10 +2473,10 @@ class StreamingServerTest extends TestCase
         $input->emit('data', ['1']);
         $input->emit('data', ['23']);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("1\r\n1\r\n", $buffer);
-        $this->assertContainsString("2\r\n23\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("1\r\n1\r\n", $buffer);
+        $this->assertStringContainsString("2\r\n23\r\n", $buffer);
     }
 
     public function testResponseBodyStreamWithContentLengthWillStreamTillLengthWithoutTransferEncoding()
@@ -2568,12 +2495,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2585,11 +2510,11 @@ class StreamingServerTest extends TestCase
         $input->emit('data', ['hel']);
         $input->emit('data', ['lo']);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Content-Length: 5\r\n", $buffer);
-        $this->assertNotContainsString("Transfer-Encoding", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("Content-Length: 5\r\n", $buffer);
+        $this->assertStringNotContainsString("Transfer-Encoding", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("hello", $buffer);
     }
 
     public function testResponseWithResponsePromise()
@@ -2602,12 +2527,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2616,8 +2539,8 @@ class StreamingServerTest extends TestCase
         $data = $this->createGetRequest();
 
         $this->connection->emit('data', [$data]);
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("\r\n\r\n", $buffer);
     }
 
     public function testResponseReturnInvalidTypeWillResultInError()
@@ -2635,12 +2558,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2650,8 +2571,8 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
     }
 
     public function testResponseResolveWrongTypeInPromiseWillResultInError()
@@ -2664,12 +2585,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2679,7 +2598,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
     }
 
     public function testResponseRejectedPromiseWillResultInErrorMessage()
@@ -2695,12 +2614,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2710,7 +2627,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
     }
 
     public function testResponseExceptionInCallbackWillResultInErrorMessage()
@@ -2726,12 +2643,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2741,7 +2656,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
     }
 
     public function testResponseWithContentLengthHeaderForStringBodyOverwritesTransferEncoding()
@@ -2758,12 +2673,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2773,11 +2686,11 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Content-Length: 5\r\n", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("Content-Length: 5\r\n", $buffer);
+        $this->assertStringContainsString("hello", $buffer);
 
-        $this->assertNotContainsString("Transfer-Encoding", $buffer);
+        $this->assertStringNotContainsString("Transfer-Encoding", $buffer);
     }
 
     public function testResponseWillBeHandled()
@@ -2790,12 +2703,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2805,7 +2716,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertStringContainsString("HTTP/1.1 200 OK\r\n", $buffer);
     }
 
     public function testResponseExceptionThrowInCallBackFunctionWillResultInErrorMessage()
@@ -2823,12 +2734,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2838,8 +2747,8 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertEquals('hello', $exception->getPrevious()->getMessage());
     }
 
@@ -2858,12 +2767,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2881,8 +2788,8 @@ class StreamingServerTest extends TestCase
             );
         }
 
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertEquals('hello', $exception->getPrevious()->getMessage());
     }
 
@@ -2903,12 +2810,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -2918,54 +2823,52 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
     }
 
     public static function provideInvalidResponse()
     {
         $response = new Response(200, [], '', '1.1', 'OK');
 
-        return [
-            [
-                $response->withStatus(99, 'OK')
-            ],
-            [
-                $response->withStatus(1000, 'OK')
-            ],
-            [
-                $response->withStatus(200, "Invald\r\nReason: Yes")
-            ],
-            [
-                $response->withHeader('Invalid', "Yes\r\n")
-            ],
-            [
-                $response->withHeader('Invalid', "Yes\n")
-            ],
-            [
-                $response->withHeader('Invalid', "Yes\r")
-            ],
-            [
-                $response->withHeader("Inva\r\nlid", 'Yes')
-            ],
-            [
-                $response->withHeader("Inva\nlid", 'Yes')
-            ],
-            [
-                $response->withHeader("Inva\rlid", 'Yes')
-            ],
-            [
-                $response->withHeader('Inva Lid', 'Yes')
-            ],
-            [
-                $response->withHeader('Inva:Lid', 'Yes')
-            ],
-            [
-                $response->withHeader('Invalid', "Val\0ue")
-            ],
-            [
-                $response->withHeader("Inva\0lid", 'Yes')
-            ]
+        yield [
+            $response->withStatus(99, 'OK')
+        ];
+        yield [
+            $response->withStatus(1000, 'OK')
+        ];
+        yield [
+            $response->withStatus(200, "Invald\r\nReason: Yes")
+        ];
+        yield [
+            $response->withHeader('Invalid', "Yes\r\n")
+        ];
+        yield [
+            $response->withHeader('Invalid', "Yes\n")
+        ];
+        yield [
+            $response->withHeader('Invalid', "Yes\r")
+        ];
+        yield [
+            $response->withHeader("Inva\r\nlid", 'Yes')
+        ];
+        yield [
+            $response->withHeader("Inva\nlid", 'Yes')
+        ];
+        yield [
+            $response->withHeader("Inva\rlid", 'Yes')
+        ];
+        yield [
+            $response->withHeader('Inva Lid', 'Yes')
+        ];
+        yield [
+            $response->withHeader('Inva:Lid', 'Yes')
+        ];
+        yield [
+            $response->withHeader('Invalid', "Val\0ue")
+        ];
+        yield [
+            $response->withHeader("Inva\0lid", 'Yes')
         ];
     }
 
@@ -2988,12 +2891,10 @@ class StreamingServerTest extends TestCase
         $this->connection
             ->expects($this->any())
             ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
+            ->willReturnCallback(
+                function ($data) use (&$buffer) {
+                    $buffer .= $data;
+                }
             );
 
         $server->listen($this->socket);
@@ -3003,8 +2904,8 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', [$data]);
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
-        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertStringContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertInstanceOf(\InvalidArgumentException::class, $exception);
     }
 
     public function testRequestServerRequestParams()
@@ -3147,7 +3048,7 @@ class StreamingServerTest extends TestCase
     {
         $server = new StreamingServer(Loop::get(), $this->expectCallableNever());
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->once())->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3164,7 +3065,7 @@ class StreamingServerTest extends TestCase
 
         $server = new StreamingServer(Loop::get(), $this->expectCallableOnceWith($request));
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->once())->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3187,7 +3088,7 @@ class StreamingServerTest extends TestCase
 
         $server = new StreamingServer(Loop::get(), $this->expectCallableOnceWith($request));
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->once())->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3212,7 +3113,7 @@ class StreamingServerTest extends TestCase
             return new Response(200, ['Connection' => 'close']);
         });
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->once())->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3237,7 +3138,7 @@ class StreamingServerTest extends TestCase
             return new Response();
         });
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->exactly(2))->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3262,7 +3163,7 @@ class StreamingServerTest extends TestCase
             return new Response();
         });
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->exactly(2))->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3288,7 +3189,7 @@ class StreamingServerTest extends TestCase
             return new Response(200, [], $body);
         });
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->once())->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');
@@ -3314,7 +3215,7 @@ class StreamingServerTest extends TestCase
             return new Response(200, [], $body);
         });
 
-        $parser = $this->getMockBuilder('React\Http\Io\RequestHeaderParser')->disableOriginalConstructor()->getMock();
+        $parser = $this->createMock(RequestHeaderParser::class);
         $parser->expects($this->exactly(2))->method('handle');
 
         $ref = new \ReflectionProperty($server, 'parser');

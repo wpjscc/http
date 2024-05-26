@@ -8,14 +8,12 @@ Use React\Tests\Http\TestCase;
 
 class UploadedFileTest extends TestCase
 {
-    public function failtyErrorProvider()
+    public static function failtyErrorProvider()
     {
-        return [
-            ['a'],
-            [null],
-            [-1],
-            [9]
-        ];
+        yield ['a'];
+        yield [null];
+        yield [-1];
+        yield [9];
     }
 
     /**
@@ -25,7 +23,8 @@ class UploadedFileTest extends TestCase
     {
         $stream = new BufferedBody('');
 
-        $this->setExpectedException('InvalidArgumentException', 'Invalid error code, must be an UPLOAD_ERR_* constant');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid error code, must be an UPLOAD_ERR_* constant');
         new UploadedFile($stream, 0, $error, 'foo.bar', 'foo/bar');
     }
 
@@ -34,7 +33,8 @@ class UploadedFileTest extends TestCase
         $stream = new BufferedBody('');
         $uploadedFile = new UploadedFile($stream, 0, UPLOAD_ERR_OK, 'foo.bar', 'foo/bar');
 
-        $this->setExpectedException('RuntimeException', 'Not implemented');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Not implemented');
         $uploadedFile->moveTo('bar.foo');
     }
 
@@ -54,7 +54,8 @@ class UploadedFileTest extends TestCase
         $stream = new BufferedBody('');
         $uploadedFile = new UploadedFile($stream, 0, UPLOAD_ERR_NO_FILE, 'foo.bar', 'foo/bar');
 
-        $this->setExpectedException('RuntimeException', 'Cannot retrieve stream due to upload error');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Cannot retrieve stream due to upload error');
         $uploadedFile->getStream();
     }
 }

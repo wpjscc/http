@@ -2,10 +2,14 @@
 
 namespace React\Tests\Http\Io;
 
+use React\EventLoop\LoopInterface;
+use React\EventLoop\TimerInterface;
 use React\Http\Io\ClientConnectionManager;
 use React\Http\Message\Uri;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
+use React\Socket\ConnectionInterface;
+use React\Socket\ConnectorInterface;
 use React\Tests\Http\TestCase;
 use function React\Promise\resolve;
 
@@ -14,10 +18,10 @@ class ClientConnectionManagerTest extends TestCase
     public function testConnectWithHttpsUriShouldConnectToTlsWithDefaultPort()
     {
         $promise = new Promise(function () { });
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn($promise);
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
 
@@ -30,10 +34,10 @@ class ClientConnectionManagerTest extends TestCase
     public function testConnectWithHttpUriShouldConnectToTcpWithDefaultPort()
     {
         $promise = new Promise(function () { });
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('reactphp.org:80')->willReturn($promise);
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
 
@@ -44,10 +48,10 @@ class ClientConnectionManagerTest extends TestCase
     public function testConnectWithExplicitPortShouldConnectWithGivenPort()
     {
         $promise = new Promise(function () { });
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('reactphp.org:8080')->willReturn($promise);
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
 
@@ -57,10 +61,10 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testConnectWithInvalidSchemeShouldRejectWithException()
     {
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->never())->method('connect');
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
 
@@ -71,16 +75,16 @@ class ClientConnectionManagerTest extends TestCase
             $exception = $reason;
         });
 
-        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertInstanceOf(\InvalidArgumentException::class, $exception);
         $this->assertEquals('Invalid request URL given', $exception->getMessage());
     }
 
     public function testConnectWithoutSchemeShouldRejectWithException()
     {
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->never())->method('connect');
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
 
@@ -91,13 +95,13 @@ class ClientConnectionManagerTest extends TestCase
             $exception = $reason;
         });
 
-        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertInstanceOf(\InvalidArgumentException::class, $exception);
         $this->assertEquals('Invalid request URL given', $exception->getMessage());
     }
 
     public function testConnectReusesIdleConnectionFromPreviousKeepAliveCallWithoutUsingConnectorAndWillAddAndRemoveStreamEventsAndAddAndCancelIdleTimer()
     {
-        $connectionToReuse = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connectionToReuse = $this->createMock(ConnectionInterface::class);
 
         $streamHandler = null;
         $connectionToReuse->expects($this->exactly(3))->method('on')->withConsecutive(
@@ -148,11 +152,11 @@ class ClientConnectionManagerTest extends TestCase
             ]
         );
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->never())->method('connect');
 
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
@@ -173,13 +177,13 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testConnectReusesIdleConnectionFromPreviousKeepAliveCallWithoutUsingConnectorAlsoWhenUriPathAndQueryAndFragmentIsDifferent()
     {
-        $connectionToReuse = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connectionToReuse = $this->createMock(ConnectionInterface::class);
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->never())->method('connect');
 
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
@@ -200,13 +204,13 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testConnectUsesConnectorWithSameUriAndReturnsPromiseForNewConnectionFromConnectorWhenPreviousKeepAliveCallUsedDifferentUri()
     {
-        $connectionToReuse = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connectionToReuse = $this->createMock(ConnectionInterface::class);
 
         $promise = new Promise(function () { });
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn($promise);
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
 
@@ -220,14 +224,14 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testConnectUsesConnectorForNewConnectionWhenPreviousConnectReusedIdleConnectionFromPreviousKeepAliveCall()
     {
-        $firstConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
-        $secondConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $firstConnection = $this->createMock(ConnectionInterface::class);
+        $secondConnection = $this->createMock(ConnectionInterface::class);
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(resolve($secondConnection));
 
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
@@ -251,12 +255,12 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testKeepAliveAddsTimerAndDoesNotCloseConnectionImmediately()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->never())->method('close');
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
 
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with(0.001, $this->anything());
 
         $connectionManager = new ClientConnectionManager($connector, $loop);
@@ -266,14 +270,14 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testKeepAliveClosesConnectionAfterIdleTimeout()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('close');
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
 
         $timerCallback = null;
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with($this->anything(), $this->callback(function ($cb) use (&$timerCallback) {
             $timerCallback = $cb;
             return true;
@@ -291,18 +295,18 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testConnectUsesConnectorForNewConnectionWhenIdleConnectionFromPreviousKeepAliveCallHasAlreadyTimedOut()
     {
-        $firstConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $firstConnection = $this->createMock(ConnectionInterface::class);
         $firstConnection->expects($this->once())->method('close');
 
-        $secondConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $secondConnection = $this->createMock(ConnectionInterface::class);
         $secondConnection->expects($this->never())->method('close');
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(resolve($secondConnection));
 
         $timerCallback = null;
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->with($this->anything(), $this->callback(function ($cb) use (&$timerCallback) {
             $timerCallback = $cb;
             return true;
@@ -330,7 +334,7 @@ class ClientConnectionManagerTest extends TestCase
 
     public function testConnectUsesConnectorForNewConnectionWhenIdleConnectionFromPreviousKeepAliveCallHasAlreadyFiredUnexpectedStreamEventBeforeIdleTimeoutThatClosesConnection()
     {
-        $firstConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $firstConnection = $this->createMock(ConnectionInterface::class);
         $firstConnection->expects($this->once())->method('close');
 
         $streamHandler = null;
@@ -358,14 +362,14 @@ class ClientConnectionManagerTest extends TestCase
             ]
         );
 
-        $secondConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $secondConnection = $this->createMock(ConnectionInterface::class);
         $secondConnection->expects($this->never())->method('close');
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->with('tls://reactphp.org:443')->willReturn(resolve($secondConnection));
 
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = $this->createMock(TimerInterface::class);
+        $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 

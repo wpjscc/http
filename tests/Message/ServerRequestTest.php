@@ -2,8 +2,10 @@
 
 namespace React\Tests\Http\Message;
 
+use Psr\Http\Message\StreamInterface;
 use React\Http\Io\HttpBodyStream;
 use React\Http\Message\ServerRequest;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 
@@ -302,8 +304,8 @@ class ServerRequestTest extends TestCase
         );
 
         $body = $request->getBody();
-        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertInstanceOf(StreamInterface::class, $body);
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
         $this->assertSame(0, $body->getSize());
     }
 
@@ -319,8 +321,8 @@ class ServerRequestTest extends TestCase
         );
 
         $body = $request->getBody();
-        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertInstanceOf(StreamInterface::class, $body);
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
         $this->assertSame(100, $body->getSize());
     }
 
@@ -336,14 +338,14 @@ class ServerRequestTest extends TestCase
         );
 
         $body = $request->getBody();
-        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertInstanceOf(StreamInterface::class, $body);
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
         $this->assertNull($body->getSize());
     }
 
     public function testConstructWithFloatRequestBodyThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new ServerRequest(
             'GET',
             'http://localhost',
@@ -354,7 +356,7 @@ class ServerRequestTest extends TestCase
 
     public function testConstructWithResourceRequestBodyThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new ServerRequest(
             'GET',
             'http://localhost',
@@ -403,85 +405,85 @@ class ServerRequestTest extends TestCase
 
     public function testParseMessageWithInvalidHttp11RequestWithoutHostThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\n", []);
     }
 
     public function testParseMessageWithInvalidHttpProtocolVersionThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.2\r\n", []);
     }
 
     public function testParseMessageWithInvalidProtocolThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / CUSTOM/1.1\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithoutValueThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderSyntaxThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: ///\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithSchemeThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: http://localhost\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithQueryThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost?foo\r\n", []);
     }
 
     public function testParseMessageWithInvalidHostHeaderWithFragmentThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost#foo\r\n", []);
     }
 
     public function testParseMessageWithInvalidContentLengthHeaderThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length:\r\n", []);
     }
 
     public function testParseMessageWithInvalidTransferEncodingHeaderThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:\r\n", []);
     }
 
     public function testParseMessageWithInvalidBothContentLengthHeaderAndTransferEncodingHeaderThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\nTransfer-Encoding: chunked\r\n", []);
     }
 
     public function testParseMessageWithInvalidEmptyHostHeaderWithAbsoluteFormRequestTargetThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET http://example.com/ HTTP/1.1\r\nHost: \r\n", []);
     }
 
     public function testParseMessageWithInvalidConnectMethodNotUsingAuthorityFormThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("CONNECT / HTTP/1.1\r\nHost: localhost\r\n", []);
     }
 
     public function testParseMessageWithInvalidRequestTargetAsteriskFormThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         ServerRequest::parseMessage("GET * HTTP/1.1\r\nHost: localhost\r\n", []);
     }
 }

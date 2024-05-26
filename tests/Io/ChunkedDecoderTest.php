@@ -3,7 +3,9 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\ChunkedDecoder;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Stream\WritableStreamInterface;
 use React\Tests\Http\TestCase;
 
 class ChunkedDecoderTest extends TestCase
@@ -394,7 +396,7 @@ class ChunkedDecoderTest extends TestCase
 
     public function testPauseStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $parser = new ChunkedDecoder($input);
@@ -403,7 +405,7 @@ class ChunkedDecoderTest extends TestCase
 
     public function testResumeStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $parser = new ChunkedDecoder($input);
@@ -413,7 +415,7 @@ class ChunkedDecoderTest extends TestCase
 
     public function testPipeStream()
     {
-        $dest = $this->getMockBuilder('React\Stream\WritableStreamInterface')->getMock();
+        $dest = $this->createMock(WritableStreamInterface::class);
 
         $ret = $this->parser->pipe($dest);
 

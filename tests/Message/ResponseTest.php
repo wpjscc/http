@@ -2,8 +2,10 @@
 
 namespace React\Tests\Http\Message;
 
+use Psr\Http\Message\StreamInterface;
 use React\Http\Io\HttpBodyStream;
 use React\Http\Message\Response;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 
@@ -15,7 +17,7 @@ class ResponseTest extends TestCase
         $body = $response->getBody();
 
         /** @var \Psr\Http\Message\StreamInterface $body */
-        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
+        $this->assertInstanceOf(StreamInterface::class, $body);
         $this->assertEquals('hello', (string) $body);
     }
 
@@ -25,9 +27,9 @@ class ResponseTest extends TestCase
         $body = $response->getBody();
 
         /** @var \Psr\Http\Message\StreamInterface $body */
-        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
-        $this->assertInstanceof('React\Stream\ReadableStreamInterface', $body);
-        $this->assertInstanceOf('React\Http\Io\HttpBodyStream', $body);
+        $this->assertInstanceOf(StreamInterface::class, $body);
+        $this->assertInstanceof(ReadableStreamInterface::class, $body);
+        $this->assertInstanceOf(HttpBodyStream::class, $body);
         $this->assertNull($body->getSize());
     }
 
@@ -44,13 +46,13 @@ class ResponseTest extends TestCase
 
     public function testFloatBodyWillThrow()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new Response(200, [], 1.0);
     }
 
     public function testResourceBodyWillThrow()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new Response(200, [], tmpfile());
     }
 
@@ -126,7 +128,8 @@ class ResponseTest extends TestCase
 
     public function testJsonMethodThrowsForInvalidString()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Unable to encode given data as JSON: Malformed UTF-8 characters, possibly incorrectly encoded');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to encode given data as JSON: Malformed UTF-8 characters, possibly incorrectly encoded');
         Response::json("Hello w\xF6rld!");
     }
 
@@ -220,25 +223,25 @@ class ResponseTest extends TestCase
 
     public function testParseMessageWithInvalidHttpProtocolVersion12Throws()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         Response::parseMessage("HTTP/1.2 200 OK\r\n");
     }
 
     public function testParseMessageWithInvalidHttpProtocolVersion2Throws()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         Response::parseMessage("HTTP/2 200 OK\r\n");
     }
 
     public function testParseMessageWithInvalidStatusCodeUnderflowThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         Response::parseMessage("HTTP/1.1 99 OK\r\n");
     }
 
     public function testParseMessageWithInvalidResponseHeaderFieldThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         Response::parseMessage("HTTP/1.1 200 OK\r\nServer\r\n");
     }
 }

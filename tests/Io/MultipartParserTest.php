@@ -2,6 +2,7 @@
 
 namespace React\Tests\Http\Io\Middleware;
 
+use Psr\Http\Message\UploadedFileInterface;
 use React\Http\Io\MultipartParser;
 use React\Http\Message\ServerRequest;
 use React\Tests\Http\TestCase;
@@ -673,7 +674,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -708,7 +709,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -742,7 +743,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -776,7 +777,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -809,7 +810,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -842,7 +843,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -1046,7 +1047,7 @@ final class MultipartParserTest extends TestCase
 
         $parser = new MultipartParser();
 
-        $reflectecClass = new \ReflectionClass('\React\Http\Io\MultipartParser');
+        $reflectecClass = new \ReflectionClass(MultipartParser::class);
         $requestProperty = $reflectecClass->getProperty('request');
         $requestProperty->setAccessible(true);
         $cursorProperty = $reflectecClass->getProperty('cursor');

@@ -7,41 +7,39 @@ use React\Tests\Http\TestCase;
 
 class IniUtilTest extends TestCase
 {
-    public function provideIniSizes()
+    public static function provideIniSizes()
     {
-        return [
-            [
-                '1',
-                1,
-            ],
-            [
-                '10',
-                10,
-            ],
-            [
-                '1024',
-                1024,
-            ],
-            [
-                '1K',
-                1024,
-            ],
-            [
-                '1.5M',
-                1572864,
-            ],
-            [
-                '64M',
-                67108864,
-            ],
-            [
-                '8G',
-                8589934592,
-            ],
-            [
-                '1T',
-                1099511627776,
-            ],
+        yield [
+            '1',
+            1,
+        ];
+        yield [
+            '10',
+            10,
+        ];
+        yield [
+            '1024',
+            1024,
+        ];
+        yield [
+            '1K',
+            1024,
+        ];
+        yield [
+            '1.5M',
+            1572864,
+        ];
+        yield [
+            '64M',
+            67108864,
+        ];
+        yield [
+            '8G',
+            8589934592,
+        ];
+        yield [
+            '1T',
+            1099511627776,
         ];
     }
 
@@ -58,16 +56,14 @@ class IniUtilTest extends TestCase
         $this->assertEquals('2', IniUtil::iniSizeToBytes('2x'));
     }
 
-    public function provideInvalidInputIniSizeToBytes()
+    public static function provideInvalidInputIniSizeToBytes()
     {
-        return [
-            ['-1G'],
-            ['0G'],
-            ['foo'],
-            ['fooK'],
-            ['1ooL'],
-            ['1ooL'],
-        ];
+        yield ['-1G'];
+        yield ['0G'];
+        yield ['foo'];
+        yield ['fooK'];
+        yield ['1ooL'];
+        yield ['1ooL'];
     }
 
     /**
@@ -75,7 +71,7 @@ class IniUtilTest extends TestCase
      */
     public function testInvalidInputIniSizeToBytes($input)
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         IniUtil::iniSizeToBytes($input);
     }
 }

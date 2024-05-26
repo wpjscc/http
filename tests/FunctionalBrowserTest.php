@@ -176,7 +176,8 @@ class FunctionalBrowserTest extends TestCase
     {
         $promise = $this->browser->get('delay');
 
-        $this->setExpectedException('InvalidArgumentException', 'Invalid request URL given');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid request URL given');
         await($promise);
     }
 
@@ -201,7 +202,7 @@ class FunctionalBrowserTest extends TestCase
         $promise = $this->browser->get($this->base . 'get');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         await($promise);
     }
 
@@ -212,13 +213,13 @@ class FunctionalBrowserTest extends TestCase
         });
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         await($promise);
     }
 
     public function testRequestWithoutAuthenticationFails()
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         await($this->browser->get($this->base . 'basic-auth/user/pass'));
     }
 
@@ -269,7 +270,8 @@ class FunctionalBrowserTest extends TestCase
             $promise->cancel();
         });
 
-        $this->setExpectedException('RuntimeException', 'Request cancelled');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Request cancelled');
         await($promise);
     }
 
@@ -277,7 +279,8 @@ class FunctionalBrowserTest extends TestCase
     {
         $promise = $this->browser->withTimeout(0.1)->get($this->base . 'delay/10');
 
-        $this->setExpectedException('RuntimeException', 'Request timed out after 0.1 seconds');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Request timed out after 0.1 seconds');
         await($promise);
     }
 
@@ -287,7 +290,8 @@ class FunctionalBrowserTest extends TestCase
         $promise = $this->browser->withTimeout(0.1)->post($this->base . 'delay/10', [], $stream);
         $stream->end();
 
-        $this->setExpectedException('RuntimeException', 'Request timed out after 0.1 seconds');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Request timed out after 0.1 seconds');
         await($promise);
     }
 
@@ -329,7 +333,7 @@ class FunctionalBrowserTest extends TestCase
     {
         $browser = $this->browser->withFollowRedirects(0);
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         await($browser->get($this->base . 'redirect-to?url=get'));
     }
 
@@ -367,11 +371,9 @@ class FunctionalBrowserTest extends TestCase
     {
         $promise = $this->browser->withResponseBuffer(4)->get($this->base . 'get');
 
-        $this->setExpectedException(
-            'OverflowException',
-            'Response body size of 5 bytes exceeds maximum of 4 bytes',
-            defined('SOCKET_EMSGSIZE') ? SOCKET_EMSGSIZE : 0
-        );
+        $this->expectException(\OverflowException::class);
+        $this->expectExceptionMessage('Response body size of 5 bytes exceeds maximum of 4 bytes');
+        $this->expectExceptionCode(defined('SOCKET_EMSGSIZE') ? SOCKET_EMSGSIZE : 0);
         await($promise);
     }
 
@@ -379,11 +381,9 @@ class FunctionalBrowserTest extends TestCase
     {
         $promise = $this->browser->withResponseBuffer(4)->get($this->base . 'stream/1');
 
-        $this->setExpectedException(
-            'OverflowException',
-            'Response body size exceeds maximum of 4 bytes',
-            defined('SOCKET_EMSGSIZE') ? SOCKET_EMSGSIZE : 0
-        );
+        $this->expectException(\OverflowException::class);
+        $this->expectExceptionMessage('Response body size exceeds maximum of 4 bytes');
+        $this->expectExceptionCode(defined('SOCKET_EMSGSIZE') ? SOCKET_EMSGSIZE : 0);
         await($promise);
     }
 
@@ -409,7 +409,7 @@ class FunctionalBrowserTest extends TestCase
 
         $browser = new Browser($connector);
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         await($browser->get('https://self-signed.badssl.com/'));
     }
 
@@ -435,7 +435,7 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testInvalidPort()
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         await($this->browser->get('http://www.google.com:443/'));
     }
 
@@ -447,7 +447,7 @@ class FunctionalBrowserTest extends TestCase
         } catch (ResponseException $e) {
             $this->assertEquals(404, $e->getCode());
 
-            $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
+            $this->assertInstanceOf(ResponseInterface::class, $e->getResponse());
             $this->assertEquals(404, $e->getResponse()->getStatusCode());
         }
     }
@@ -762,7 +762,7 @@ class FunctionalBrowserTest extends TestCase
         $body = $response->getBody();
         $this->assertEquals(5, $body->getSize());
         $this->assertEquals('', (string) $body);
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
     }
 
     public function testRequestStreamingGetReceivesResponseWithStreamingBodyAndUnknownSizeFromStreamingEndpoint()
@@ -773,7 +773,7 @@ class FunctionalBrowserTest extends TestCase
         $body = $response->getBody();
         $this->assertNull($body->getSize());
         $this->assertEquals('', (string) $body);
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
     }
 
     public function testRequestStreamingGetReceivesStreamingResponseBody()

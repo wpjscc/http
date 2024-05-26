@@ -3,7 +3,9 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\LengthLimitedStream;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Stream\WritableStreamInterface;
 use React\Tests\Http\TestCase;
 
 class LengthLimitedStreamTest extends TestCase
@@ -59,7 +61,7 @@ class LengthLimitedStreamTest extends TestCase
 
     public function testPauseStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $stream = new LengthLimitedStream($input, 0);
@@ -68,7 +70,7 @@ class LengthLimitedStreamTest extends TestCase
 
     public function testResumeStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $stream = new LengthLimitedStream($input, 0);
@@ -79,7 +81,7 @@ class LengthLimitedStreamTest extends TestCase
     public function testPipeStream()
     {
         $stream = new LengthLimitedStream($this->input, 0);
-        $dest = $this->getMockBuilder('React\Stream\WritableStreamInterface')->getMock();
+        $dest = $this->createMock(WritableStreamInterface::class);
 
         $ret = $stream->pipe($dest);
 

@@ -91,7 +91,7 @@ class BufferedBodyTest extends TestCase
         } catch (\RuntimeException $e) {
             $this->assertSame(0, $stream->tell());
 
-            $this->setExpectedException('RuntimeException');
+            $this->expectException(\RuntimeException::class);
             throw $e;
         }
     }
@@ -100,7 +100,7 @@ class BufferedBodyTest extends TestCase
     {
         $stream = new BufferedBody('hello');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $stream->seek(1, 12345);
     }
 
@@ -109,7 +109,7 @@ class BufferedBodyTest extends TestCase
         $stream = new BufferedBody('hello');
         $stream->close();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $stream->seek(0);
     }
 
@@ -118,7 +118,7 @@ class BufferedBodyTest extends TestCase
         $stream = new BufferedBody('hello');
         $stream->close();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $stream->tell();
     }
 
@@ -136,7 +136,7 @@ class BufferedBodyTest extends TestCase
         $stream = new BufferedBody('hello');
         $stream->close();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $stream->rewind();
     }
 
@@ -180,7 +180,7 @@ class BufferedBodyTest extends TestCase
     {
         $stream = new BufferedBody('hello');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $stream->read(0);
     }
 
@@ -189,7 +189,7 @@ class BufferedBodyTest extends TestCase
         $stream = new BufferedBody('hello');
         $stream->close();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $stream->read(10);
     }
 
@@ -218,7 +218,7 @@ class BufferedBodyTest extends TestCase
         $stream = new BufferedBody('hello');
         $stream->close();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $stream->getContents();
     }
 
@@ -280,7 +280,7 @@ class BufferedBodyTest extends TestCase
         $stream = new BufferedBody('hello');
         $stream->close();
 
-        $this->setExpectedException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $stream->write('foo');
     }
 

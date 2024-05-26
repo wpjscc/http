@@ -3,13 +3,17 @@
 namespace React\Tests\Http\Io;
 
 use Psr\Http\Message\RequestInterface;
+use React\EventLoop\LoopInterface;
 use React\Http\Client\Client as HttpClient;
 use React\Http\Io\ClientConnectionManager;
+use React\Http\Io\ClientRequestStream;
 use React\Http\Io\EmptyBodyStream;
 use React\Http\Io\ReadableBodyStream;
 use React\Http\Io\Sender;
 use React\Http\Message\Request;
 use React\Promise\Promise;
+use React\Socket\ConnectionInterface;
+use React\Socket\ConnectorInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 use function React\Promise\reject;
@@ -25,19 +29,19 @@ class SenderTest extends TestCase
      */
     public function setUpLoop()
     {
-        $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $this->loop = $this->createMock(LoopInterface::class);
     }
 
     public function testCreateFromLoop()
     {
         $sender = Sender::createFromLoop($this->loop, null);
 
-        $this->assertInstanceOf('React\Http\Io\Sender', $sender);
+        $this->assertInstanceOf(Sender::class, $sender);
     }
 
     public function testSenderRejectsInvalidUri()
     {
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->never())->method('connect');
 
         $sender = new Sender(new HttpClient(new ClientConnectionManager($connector, $this->loop)));
@@ -51,12 +55,12 @@ class SenderTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertInstanceOf(\InvalidArgumentException::class, $exception);
     }
 
     public function testSenderConnectorRejection()
     {
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->willReturn(reject(new \RuntimeException('Rejected')));
 
         $sender = new Sender(new HttpClient(new ClientConnectionManager($connector, $this->loop)));
@@ -70,15 +74,15 @@ class SenderTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
     }
 
     public function testSendPostWillAutomaticallySendContentLengthHeader()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Content-Length') === '5';
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -88,10 +92,10 @@ class SenderTest extends TestCase
 
     public function testSendPostWillAutomaticallySendContentLengthZeroHeaderForEmptyRequestBody()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Content-Length') === '0';
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -101,10 +105,10 @@ class SenderTest extends TestCase
 
     public function testSendPostStreamWillAutomaticallySendTransferEncodingChunked()
     {
-        $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
+        $outgoing = $this->createMock(ClientRequestStream::class);
         $outgoing->expects($this->once())->method('write')->with("");
 
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Transfer-Encoding') === 'chunked';
         }))->willReturn($outgoing);
@@ -118,11 +122,11 @@ class SenderTest extends TestCase
 
     public function testSendPostStreamWillAutomaticallyPipeChunkEncodeBodyForWriteAndRespectRequestThrottling()
     {
-        $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
+        $outgoing = $this->createMock(ClientRequestStream::class);
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
         $outgoing->expects($this->exactly(2))->method('write')->withConsecutive([""], ["5\r\nhello\r\n"])->willReturn(false);
 
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->willReturn($outgoing);
 
         $sender = new Sender($client);
@@ -137,12 +141,12 @@ class SenderTest extends TestCase
 
     public function testSendPostStreamWillAutomaticallyPipeChunkEncodeBodyForEnd()
     {
-        $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
+        $outgoing = $this->createMock(ClientRequestStream::class);
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
         $outgoing->expects($this->exactly(2))->method('write')->withConsecutive([""], ["0\r\n\r\n"])->willReturn(false);
         $outgoing->expects($this->once())->method('end')->with(null);
 
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->willReturn($outgoing);
 
         $sender = new Sender($client);
@@ -156,13 +160,13 @@ class SenderTest extends TestCase
 
     public function testSendPostStreamWillRejectWhenRequestBodyEmitsErrorEvent()
     {
-        $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
+        $outgoing = $this->createMock(ClientRequestStream::class);
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
         $outgoing->expects($this->once())->method('write')->with("")->willReturn(false);
         $outgoing->expects($this->never())->method('end');
         $outgoing->expects($this->once())->method('close');
 
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->willReturn($outgoing);
 
         $sender = new Sender($client);
@@ -179,20 +183,20 @@ class SenderTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Request failed because request body reported an error', $exception->getMessage());
         $this->assertSame($expected, $exception->getPrevious());
     }
 
     public function testSendPostStreamWillRejectWhenRequestBodyClosesWithoutEnd()
     {
-        $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
+        $outgoing = $this->createMock(ClientRequestStream::class);
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
         $outgoing->expects($this->once())->method('write')->with("")->willReturn(false);
         $outgoing->expects($this->never())->method('end');
         $outgoing->expects($this->once())->method('close');
 
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->willReturn($outgoing);
 
         $sender = new Sender($client);
@@ -208,19 +212,19 @@ class SenderTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
         $this->assertEquals('Request failed because request body closed unexpectedly', $exception->getMessage());
     }
 
     public function testSendPostStreamWillNotRejectWhenRequestBodyClosesAfterEnd()
     {
-        $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
+        $outgoing = $this->createMock(ClientRequestStream::class);
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
         $outgoing->expects($this->exactly(2))->method('write')->withConsecutive([""], ["0\r\n\r\n"])->willReturn(false);
         $outgoing->expects($this->once())->method('end');
         $outgoing->expects($this->never())->method('close');
 
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->willReturn($outgoing);
 
         $sender = new Sender($client);
@@ -242,10 +246,10 @@ class SenderTest extends TestCase
 
     public function testSendPostStreamWithExplicitContentLengthWillSendHeaderAsIs()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Content-Length') === '100';
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -256,10 +260,10 @@ class SenderTest extends TestCase
 
     public function testSendGetWillNotPassContentLengthHeaderForEmptyRequestBody()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return !$request->hasHeader('Content-Length');
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -269,10 +273,10 @@ class SenderTest extends TestCase
 
     public function testSendGetWithEmptyBodyStreamWillNotPassContentLengthOrTransferEncodingHeader()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return !$request->hasHeader('Content-Length') && !$request->hasHeader('Transfer-Encoding');
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -284,10 +288,10 @@ class SenderTest extends TestCase
 
     public function testSendCustomMethodWillNotPassContentLengthHeaderForEmptyRequestBody()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return !$request->hasHeader('Content-Length');
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -297,10 +301,10 @@ class SenderTest extends TestCase
 
     public function testSendCustomMethodWithExplicitContentLengthZeroWillBePassedAsIs()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Content-Length') === '0';
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -311,10 +315,10 @@ class SenderTest extends TestCase
     /** @test */
     public function getRequestWithUserAndPassShouldSendAGetRequestWithBasicAuthorizationHeader()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Authorization') === 'Basic am9objpkdW1teQ==';
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -325,10 +329,10 @@ class SenderTest extends TestCase
     /** @test */
     public function getRequestWithUserAndPassShouldSendAGetRequestWithGivenAuthorizationHeaderBasicAuthorizationHeader()
     {
-        $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
+        $client = $this->createMock(HttpClient::class);
         $client->expects($this->once())->method('request')->with($this->callback(function (RequestInterface $request) {
             return $request->getHeaderLine('Authorization') === 'bearer abc123';
-        }))->willReturn($this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock());
+        }))->willReturn($this->createMock(ClientRequestStream::class));
 
         $sender = new Sender($client);
 
@@ -342,7 +346,7 @@ class SenderTest extends TestCase
             throw new \RuntimeException();
         });
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->willReturn($promise);
 
         $sender = new Sender(new HttpClient(new ClientConnectionManager($connector, $this->loop)));
@@ -357,15 +361,15 @@ class SenderTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
     }
 
     public function testCancelRequestWillCloseConnection()
     {
-        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())->method('close');
 
-        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector = $this->createMock(ConnectorInterface::class);
         $connector->expects($this->once())->method('connect')->willReturn(resolve($connection));
 
         $sender = new Sender(new HttpClient(new ClientConnectionManager($connector, $this->loop)));
@@ -380,6 +384,6 @@ class SenderTest extends TestCase
             $exception = $e;
         });
 
-        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertInstanceOf(\RuntimeException::class, $exception);
     }
 }
