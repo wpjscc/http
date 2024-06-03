@@ -7,14 +7,15 @@ use React\EventLoop\Loop;
 use React\Http\Client\Client;
 use React\Http\Io\ClientConnectionManager;
 use React\Http\Message\Request;
-use React\Promise\Deferred;
 use React\Promise\Promise;
-use React\Promise\Stream;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use React\Socket\SocketServer;
 use React\Stream\ReadableStreamInterface;
 use React\Tests\Http\TestCase;
+use function React\Async\await;
+use function React\Promise\Stream\first;
+use function React\Promise\Timer\timeout;
 
 class FunctionalIntegrationTest extends TestCase
 {
@@ -49,12 +50,12 @@ class FunctionalIntegrationTest extends TestCase
         $port = parse_url($socket->getAddress(), PHP_URL_PORT);
 
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
-        $request = $client->request(new Request('GET', 'http://localhost:' . $port, array(), '', '1.0'));
+        $request = $client->request(new Request('GET', 'http://localhost:' . $port, [], '', '1.0'));
 
-        $promise = Stream\first($request, 'close');
+        $promise = first($request, 'close');
         $request->end();
 
-        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT_LOCAL));
+        await(timeout($promise, self::TIMEOUT_LOCAL));
     }
 
     public function testRequestToLocalhostWillConnectAndCloseConnectionAfterResponseWhenKeepAliveTimesOut()
@@ -74,11 +75,11 @@ class FunctionalIntegrationTest extends TestCase
         $port = parse_url($socket->getAddress(), PHP_URL_PORT);
 
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
-        $request = $client->request(new Request('GET', 'http://localhost:' . $port, array(), '', '1.1'));
+        $request = $client->request(new Request('GET', 'http://localhost:' . $port, [], '', '1.1'));
 
         $request->end();
 
-        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT_LOCAL));
+        await(timeout($promise, self::TIMEOUT_LOCAL));
     }
 
     public function testRequestToLocalhostWillReuseExistingConnectionForSecondRequest()
@@ -96,17 +97,17 @@ class FunctionalIntegrationTest extends TestCase
 
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
 
-        $request = $client->request(new Request('GET', 'http://localhost:' . $port, array(), '', '1.1'));
-        $promise = Stream\first($request, 'close');
+        $request = $client->request(new Request('GET', 'http://localhost:' . $port, [], '', '1.1'));
+        $promise = first($request, 'close');
         $request->end();
 
-        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT_LOCAL));
+        await(timeout($promise, self::TIMEOUT_LOCAL));
 
-        $request = $client->request(new Request('GET', 'http://localhost:' . $port, array(), '', '1.1'));
-        $promise = Stream\first($request, 'close');
+        $request = $client->request(new Request('GET', 'http://localhost:' . $port, [], '', '1.1'));
+        $promise = first($request, 'close');
         $request->end();
 
-        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT_LOCAL));
+        await(timeout($promise, self::TIMEOUT_LOCAL));
     }
 
     public function testRequestLegacyHttpServerWithOnlyLineFeedReturnsSuccessfulResponse()
@@ -118,49 +119,43 @@ class FunctionalIntegrationTest extends TestCase
         });
 
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
-        $request = $client->request(new Request('GET', str_replace('tcp:', 'http:', $socket->getAddress()), array(), '', '1.0'));
+        $request = $client->request(new Request('GET', str_replace('tcp:', 'http:', $socket->getAddress()), [], '', '1.0'));
 
         $once = $this->expectCallableOnceWith('body');
         $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($once) {
             $body->on('data', $once);
         });
 
-        $promise = Stream\first($request, 'close');
+        $promise = first($request, 'close');
         $request->end();
 
-        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT_LOCAL));
+        await(timeout($promise, self::TIMEOUT_LOCAL));
     }
 
     /** @group internet */
     public function testSuccessfulResponseEmitsEnd()
     {
-        // max_nesting_level was set to 100 for PHP Versions < 5.4 which resulted in failing test for legacy PHP
-        ini_set('xdebug.max_nesting_level', 256);
-
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
 
-        $request = $client->request(new Request('GET', 'http://www.google.com/', array(), '', '1.0'));
+        $request = $client->request(new Request('GET', 'http://www.google.com/', [], '', '1.0'));
 
         $once = $this->expectCallableOnce();
         $request->on('response', function (ResponseInterface $response, ReadableStreamInterface $body) use ($once) {
             $body->on('end', $once);
         });
 
-        $promise = Stream\first($request, 'close');
+        $promise = first($request, 'close');
         $request->end();
 
-        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT_REMOTE));
+        await(timeout($promise, self::TIMEOUT_REMOTE));
     }
 
     /** @group internet */
     public function testCancelPendingConnectionEmitsClose()
     {
-        // max_nesting_level was set to 100 for PHP Versions < 5.4 which resulted in failing test for legacy PHP
-        ini_set('xdebug.max_nesting_level', 256);
-
         $client = new Client(new ClientConnectionManager(new Connector(), Loop::get()));
 
-        $request = $client->request(new Request('GET', 'http://www.google.com/', array(), '', '1.0'));
+        $request = $client->request(new Request('GET', 'http://www.google.com/', [], '', '1.0'));
         $request->on('error', $this->expectCallableNever());
         $request->on('close', $this->expectCallableOnce());
         $request->end();

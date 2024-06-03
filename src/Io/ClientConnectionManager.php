@@ -8,6 +8,8 @@ use React\EventLoop\TimerInterface;
 use React\Promise\PromiseInterface;
 use React\Socket\ConnectionInterface;
 use React\Socket\ConnectorInterface;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 /**
  * [Internal] Manages outgoing HTTP connections for the HTTP client
@@ -24,16 +26,16 @@ class ClientConnectionManager
     private $loop;
 
     /** @var string[] */
-    private $idleUris = array();
+    private $idleUris = [];
 
     /** @var ConnectionInterface[] */
-    private $idleConnections = array();
+    private $idleConnections = [];
 
     /** @var TimerInterface[] */
-    private $idleTimers = array();
+    private $idleTimers = [];
 
     /** @var \Closure[] */
-    private $idleStreamHandlers = array();
+    private $idleStreamHandlers = [];
 
     /** @var float */
     private $maximumTimeToKeepAliveIdleConnection = 0.001;
@@ -51,7 +53,7 @@ class ClientConnectionManager
     {
         $scheme = $uri->getScheme();
         if ($scheme !== 'https' && $scheme !== 'http') {
-            return \React\Promise\reject(new \InvalidArgumentException(
+            return reject(new \InvalidArgumentException(
                 'Invalid request URL given'
             ));
         }
@@ -74,7 +76,7 @@ class ClientConnectionManager
                 $this->loop->cancelTimer($this->idleTimers[$id]);
                 unset($this->idleUris[$id], $this->idleConnections[$id], $this->idleTimers[$id], $this->idleStreamHandlers[$id]);
 
-                return \React\Promise\resolve($connection);
+                return resolve($connection);
             }
         }
 
@@ -100,10 +102,8 @@ class ClientConnectionManager
         $this->idleUris[] = ($scheme === 'https' ? 'tls://' : '') . $uri->getHost() . ':' . $port;
         $this->idleConnections[] = $connection;
 
-        $that = $this;
-        $cleanUp = function () use ($connection, $that) {
-            // call public method to support legacy PHP 5.3
-            $that->cleanUpConnection($connection);
+        $cleanUp = function () use ($connection) {
+            $this->cleanUpConnection($connection);
         };
 
         // clean up and close connection when maximum time to keep-alive idle connection has passed
@@ -116,11 +116,8 @@ class ClientConnectionManager
         $connection->on('error', $cleanUp);
     }
 
-    /**
-     * @internal
-     * @return void
-     */
-    public function cleanUpConnection(ConnectionInterface $connection) // private (PHP 5.4+)
+    /** @return void */
+    private function cleanUpConnection(ConnectionInterface $connection)
     {
         $id = \array_search($connection, $this->idleConnections, true);
         if ($id === false) {

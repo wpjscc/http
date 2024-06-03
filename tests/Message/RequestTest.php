@@ -2,8 +2,10 @@
 
 namespace React\Tests\Http\Message;
 
+use Psr\Http\Message\StreamInterface;
 use React\Http\Io\HttpBodyStream;
 use React\Http\Message\Request;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 
@@ -14,7 +16,7 @@ class RequestTest extends TestCase
         $request = new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             'foo'
         );
 
@@ -28,13 +30,13 @@ class RequestTest extends TestCase
         $request = new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             new ThroughStream()
         );
 
         $body = $request->getBody();
-        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertInstanceOf(StreamInterface::class, $body);
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
         $this->assertNull($body->getSize());
     }
 
@@ -43,7 +45,7 @@ class RequestTest extends TestCase
         $request = new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             $body = new HttpBodyStream(new ThroughStream(), 100)
         );
 
@@ -52,11 +54,12 @@ class RequestTest extends TestCase
 
     public function testConstructWithNullBodyThrows()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid request body given');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid request body given');
         new Request(
             'GET',
             'http://localhost',
-            array(),
+            [],
             null
         );
     }

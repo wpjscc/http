@@ -8,12 +8,13 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
-use React\Promise;
 use React\Promise\PromiseInterface;
 use React\Socket\ConnectionInterface;
 use React\Socket\ServerInterface;
 use React\Stream\ReadableStreamInterface;
 use React\Stream\WritableStreamInterface;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 /**
  * The internal `StreamingServer` class is responsible for handling incoming connections and then
@@ -31,9 +32,9 @@ use React\Stream\WritableStreamInterface;
  * $server = new StreamingServer($loop, function (ServerRequestInterface $request) {
  *     return new Response(
  *         Response::STATUS_OK,
- *         array(
+ *         [
  *             'Content-Type' => 'text/plain'
- *         ),
+ *         ],
  *         "Hello World!\n"
  *     );
  * });
@@ -55,7 +56,7 @@ use React\Stream\WritableStreamInterface;
  * ```php
  * $server = new StreamingServer($loop, $handler);
  *
- * $socket = new React\Socket\SocketServer('0.0.0.0:8080', array(), $loop);
+ * $socket = new React\Socket\SocketServer('0.0.0.0:8080', [], $loop);
  * $server->listen($socket);
  * ```
  *
@@ -109,16 +110,15 @@ final class StreamingServer extends EventEmitter
         $this->clock = new Clock($loop);
         $this->parser = new RequestHeaderParser($this->clock);
 
-        $that = $this;
-        $this->parser->on('headers', function (ServerRequestInterface $request, ConnectionInterface $conn) use ($that) {
-            $that->handleRequest($conn, $request);
+        $this->parser->on('headers', function (ServerRequestInterface $request, ConnectionInterface $conn) {
+            $this->handleRequest($conn, $request);
         });
 
-        $this->parser->on('error', function(\Exception $e, ConnectionInterface $conn) use ($that) {
-            $that->emit('error', array($e));
+        $this->parser->on('error', function(\Exception $e, ConnectionInterface $conn) {
+            $this->emit('error', [$e]);
 
             // parsing failed => assume dummy request and send appropriate error
-            $that->writeError(
+            $this->writeError(
                 $conn,
                 $e->getCode() !== 0 ? $e->getCode() : Response::STATUS_BAD_REQUEST,
                 new ServerRequest('GET', '/')
@@ -134,7 +134,7 @@ final class StreamingServer extends EventEmitter
      */
     public function listen(ServerInterface $socket)
     {
-        $socket->on('connection', array($this->parser, 'handle'));
+        $socket->on('connection', [$this->parser, 'handle']);
     }
 
     /** @internal */
@@ -145,15 +145,11 @@ final class StreamingServer extends EventEmitter
         }
 
         // execute request handler callback
-        $callback = $this->callback;
         try {
-            $response = $callback($request);
-        } catch (\Exception $error) {
+            $response = ($this->callback)($request);
+        } catch (\Throwable $error) {
             // request handler callback throws an Exception
-            $response = Promise\reject($error);
-        } catch (\Throwable $error) { // @codeCoverageIgnoreStart
-            // request handler callback throws a PHP7+ Error
-            $response = Promise\reject($error); // @codeCoverageIgnoreEnd
+            $response = reject($error);
         }
 
         // cancel pending promise once connection closes
@@ -177,23 +173,22 @@ final class StreamingServer extends EventEmitter
 
         // did not return a promise? this is an error, convert into one for rejection below.
         if (!$response instanceof PromiseInterface) {
-            $response = Promise\resolve($response);
+            $response = resolve($response);
         }
 
-        $that = $this;
         $response->then(
-            function ($response) use ($that, $conn, $request) {
+            function ($response) use ($conn, $request) {
                 if (!$response instanceof ResponseInterface) {
                     $message = 'The response callback is expected to resolve with an object implementing Psr\Http\Message\ResponseInterface, but resolved with "%s" instead.';
                     $message = \sprintf($message, \is_object($response) ? \get_class($response) : \gettype($response));
                     $exception = new \RuntimeException($message);
 
-                    $that->emit('error', array($exception));
-                    return $that->writeError($conn, Response::STATUS_INTERNAL_SERVER_ERROR, $request);
+                    $this->emit('error', [$exception]);
+                    return $this->writeError($conn, Response::STATUS_INTERNAL_SERVER_ERROR, $request);
                 }
-                $that->handleResponse($conn, $request, $response);
+                $this->handleResponse($conn, $request, $response);
             },
-            function ($error) use ($that, $conn, $request) {
+            function ($error) use ($conn, $request) {
                 $message = 'The response callback is expected to resolve with an object implementing Psr\Http\Message\ResponseInterface, but rejected with "%s" instead.';
                 $message = \sprintf($message, \is_object($error) ? \get_class($error) : \gettype($error));
 
@@ -205,8 +200,8 @@ final class StreamingServer extends EventEmitter
 
                 $exception = new \RuntimeException($message, 0, $previous);
 
-                $that->emit('error', array($exception));
-                return $that->writeError($conn, Response::STATUS_INTERNAL_SERVER_ERROR, $request);
+                $this->emit('error', [$exception]);
+                return $this->writeError($conn, Response::STATUS_INTERNAL_SERVER_ERROR, $request);
             }
         )->then($connectionOnCloseResponseCancelerHandler, $connectionOnCloseResponseCancelerHandler);
     }
@@ -216,10 +211,10 @@ final class StreamingServer extends EventEmitter
     {
         $response = new Response(
             $code,
-            array(
+            [
                 'Content-Type' => 'text/plain',
                 'Connection' => 'close' // we do not want to keep the connection open after an error
-            ),
+            ],
             'Error ' . $code
         );
 
@@ -346,9 +341,8 @@ final class StreamingServer extends EventEmitter
             }
         }
 
-        /** @var array $m legacy PHP 5.3 only */
-        if ($code < 100 || $code > 999 || \substr_count($headers, "\n") !== ($expected + 1) || (\PHP_VERSION_ID >= 50400 ? \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers) : \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers, $m)) !== $expected) {
-            $this->emit('error', array(new \InvalidArgumentException('Unable to send response with invalid response headers')));
+        if ($code < 100 || $code > 999 || \substr_count($headers, "\n") !== ($expected + 1) || \preg_match_all(AbstractMessage::REGEX_HEADERS, $headers) !== $expected) {
+            $this->emit('error', [new \InvalidArgumentException('Unable to send response with invalid response headers')]);
             $this->writeError($connection, Response::STATUS_INTERNAL_SERVER_ERROR, $request);
             return;
         }
@@ -388,15 +382,14 @@ final class StreamingServer extends EventEmitter
         // Close response stream once connection closes.
         // Note that this TCP/IP close detection may take some time,
         // in particular this may only fire on a later read/write attempt.
-        $connection->on('close', array($body, 'close'));
+        $connection->on('close', [$body, 'close']);
 
         // write streaming body and then wait for next request over persistent connection
         if ($persist) {
-            $body->pipe($connection, array('end' => false));
-            $parser = $this->parser;
-            $body->on('end', function () use ($connection, $parser, $body) {
-                $connection->removeListener('close', array($body, 'close'));
-                $parser->handle($connection);
+            $body->pipe($connection, ['end' => false]);
+            $body->on('end', function () use ($connection, $body) {
+                $connection->removeListener('close', [$body, 'close']);
+                $this->parser->handle($connection);
             });
         } else {
             $body->pipe($connection);

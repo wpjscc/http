@@ -2,11 +2,12 @@
 
 namespace React\Tests\Http;
 
+use PHPUnit\Framework\MockObject\MockBuilder;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
-    public function expectCallableOnce() // protected (PHP 5.4+)
+    protected function expectCallableOnce()
     {
         $mock = $this->createCallableMock();
         $mock
@@ -16,7 +17,7 @@ class TestCase extends BaseTestCase
         return $mock;
     }
 
-    public function expectCallableOnceWith($value) // protected (PHP 5.4+)
+    protected function expectCallableOnceWith($value)
     {
         $mock = $this->createCallableMock();
         $mock
@@ -27,7 +28,7 @@ class TestCase extends BaseTestCase
         return $mock;
     }
 
-    public function expectCallableNever() // protected (PHP 5.4+)
+    protected function expectCallableNever()
     {
         $mock = $this->createCallableMock();
         $mock
@@ -39,52 +40,12 @@ class TestCase extends BaseTestCase
 
     protected function createCallableMock()
     {
-        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'addMethods')) {
+        if (method_exists(MockBuilder::class, 'addMethods')) {
             // PHPUnit 9+
-            return $this->getMockBuilder('stdClass')->addMethods(array('__invoke'))->getMock();
+            return $this->getMockBuilder(\stdClass::class)->addMethods(['__invoke'])->getMock();
         } else {
-            // legacy PHPUnit 4 - PHPUnit 8
-            return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
+            // legacy PHPUnit
+            return $this->getMockBuilder(\stdClass::class)->setMethods(['__invoke'])->getMock();
         }
     }
-
-    public function assertContainsString($needle, $haystack)
-    {
-        if (method_exists($this, 'assertStringContainsString')) {
-            // PHPUnit 7.5+
-            $this->assertStringContainsString($needle, $haystack);
-        } else {
-            // legacy PHPUnit 4 - PHPUnit 7.5
-            $this->assertContains($needle, $haystack);
-        }
-    }
-
-    public function assertNotContainsString($needle, $haystack)
-    {
-        if (method_exists($this, 'assertStringNotContainsString')) {
-            // PHPUnit 7.5+
-            $this->assertStringNotContainsString($needle, $haystack);
-        } else {
-            // legacy PHPUnit 4 - PHPUnit 7.5
-            $this->assertNotContains($needle, $haystack);
-        }
-    }
-
-    public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
-    {
-        if (method_exists($this, 'expectException')) {
-            // PHPUnit 5+
-            $this->expectException($exception);
-            if ($exceptionMessage !== '') {
-                $this->expectExceptionMessage($exceptionMessage);
-            }
-            if ($exceptionCode !== null) {
-                $this->expectExceptionCode($exceptionCode);
-            }
-        } else {
-            // legacy PHPUnit 4
-            parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
-        }
-    }
-
 }

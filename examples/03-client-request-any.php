@@ -10,13 +10,13 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $client = new Browser();
 
-$promises = array(
+$promises = [
     $client->head('http://www.github.com/clue/http-react'),
     $client->get('https://httpbingo.org/'),
     $client->get('https://google.com'),
     $client->get('http://www.lueck.tv/psocksd'),
     $client->get('http://httpbingo.org/absolute-redirect/5')
-);
+];
 
 React\Promise\any($promises)->then(function (ResponseInterface $response) use ($promises) {
     // first response arrived => cancel all other pending requests

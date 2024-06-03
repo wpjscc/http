@@ -144,12 +144,12 @@ Most importantly, this project provides a [`Browser`](#browser) object that
 offers several methods that resemble the HTTP protocol methods:
 
 ```php
-$browser->get($url, array $headers = array());
-$browser->head($url, array $headers = array());
-$browser->post($url, array $headers = array(), string|ReadableStreamInterface $body = '');
-$browser->delete($url, array $headers = array(), string|ReadableStreamInterface $body = '');
-$browser->put($url, array $headers = array(), string|ReadableStreamInterface $body = '');
-$browser->patch($url, array $headers = array(), string|ReadableStreamInterface $body = '');
+$browser->get($url, array $headers = []);
+$browser->head($url, array $headers = []);
+$browser->post($url, array $headers = [], string|ReadableStreamInterface $body = '');
+$browser->delete($url, array $headers = [], string|ReadableStreamInterface $body = '');
+$browser->put($url, array $headers = [], string|ReadableStreamInterface $body = '');
+$browser->patch($url, array $headers = [], string|ReadableStreamInterface $body = '');
 ```
 
 Each of these methods requires a `$url` and some optional parameters to send an
@@ -285,9 +285,9 @@ like this:
 ```php
 $browser = new React\Http\Browser(
     new React\Socket\Connector(
-        array(
+        [
             'timeout' => 5
-        )
+        ]
     )
 );
 ```
@@ -323,9 +323,9 @@ $token = 'abc123';
 
 $promise = $browser->get(
     'https://example.com/api',
-    array(
+    [
         'Authorization' => 'Bearer ' . $token
-    )
+    ]
 );
 ```
 
@@ -411,10 +411,10 @@ Similarly, you can also process multiple requests concurrently and await an arra
 use function React\Async\await;
 use function React\Promise\all;
 
-$promises = array(
+$promises = [
     $browser->get('http://example.com/'),
     $browser->get('http://www.example.org/'),
-);
+];
 
 $responses = await(all($promises));
 ```
@@ -540,7 +540,7 @@ You can invoke the following methods on the message body:
 $body->on($event, $callback);
 $body->eof();
 $body->isReadable();
-$body->pipe(React\Stream\WritableStreamInterface $dest, array $options = array());
+$body->pipe(React\Stream\WritableStreamInterface $dest, array $options = []);
 $body->close();
 $body->pause();
 $body->resume();
@@ -575,10 +575,10 @@ Consider looking into also using [react/promise-stream](https://github.com/react
 The resulting streaming code could look something like this:
 
 ```php
-use React\Promise\Stream;
+use function React\Promise\Stream\unwrapReadable;
 
 function download(Browser $browser, string $url): React\Stream\ReadableStreamInterface {
-    return Stream\unwrapReadable(
+    return unwrapReadable(
         $browser->requestStreaming('GET', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
             return $response->getBody();
         })
@@ -606,7 +606,7 @@ implementing [ReactPHP's `ReadableStreamInterface`](https://github.com/reactphp/
 to the [request methods](#request-methods) like this:
 
 ```php
-$browser->post($url, array(), $stream)->then(function (Psr\Http\Message\ResponseInterface $response) {
+$browser->post($url, [], $stream)->then(function (Psr\Http\Message\ResponseInterface $response) {
     echo 'Successfully sent.';
 }, function (Exception $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;
@@ -623,7 +623,7 @@ Loop::addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
 
-$browser->post($url, array('Content-Length' => '11'), $body);
+$browser->post($url, ['Content-Length' => '11'], $body);
 ```
 
 If the streaming request body emits an `error` event or is explicitly closed
@@ -645,10 +645,10 @@ protocol, such as plain HTTP and TLS-encrypted HTTPS.
 ```php
 $proxy = new Clue\React\HttpProxy\ProxyConnector('127.0.0.1:8080');
 
-$connector = new React\Socket\Connector(array(
+$connector = new React\Socket\Connector([
     'tcp' => $proxy,
     'dns' => false
-));
+]);
 
 $browser = new React\Http\Browser($connector);
 ```
@@ -669,10 +669,10 @@ only, this can technically be used to tunnel any TCP/IP-based protocol.
 ```php
 $proxy = new Clue\React\Socks\Client('127.0.0.1:1080');
 
-$connector = new React\Socket\Connector(array(
+$connector = new React\Socket\Connector([
     'tcp' => $proxy,
     'dns' => false
-));
+]);
 
 $browser = new React\Http\Browser($connector);
 ```
@@ -698,10 +698,10 @@ plain HTTP and TLS-encrypted HTTPS.
 ```php
 $proxy = new Clue\React\SshProxy\SshSocksConnector('alice@example.com');
 
-$connector = new React\Socket\Connector(array(
+$connector = new React\Socket\Connector([
     'tcp' => $proxy,
     'dns' => false
-));
+]);
 
 $browser = new React\Http\Browser($connector);
 ```
@@ -931,11 +931,11 @@ using a secure TLS listen address, a certificate file and optional
 ```php
 $http = new React\Http\HttpServer($handler);
 
-$socket = new React\Socket\SocketServer('tls://0.0.0.0:8443', array(
-    'tls' => array(
+$socket = new React\Socket\SocketServer('tls://0.0.0.0:8443', [
+    'tls' => [
         'local_cert' => __DIR__ . '/localhost.pem'
-    )
-));
+    ]
+]);
 $http->listen($socket);
 ```
 
@@ -1456,9 +1456,9 @@ $http = new React\Http\HttpServer(function (Psr\Http\Message\ServerRequestInterf
 
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Content-Type' => 'text/plain'
-        ),
+        ],
         $stream
     );
 });
@@ -1558,10 +1558,10 @@ $http = new React\Http\HttpServer(function (Psr\Http\Message\ServerRequestInterf
 
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Content-Length' => '13',
             'Content-Type' => 'text/plain',
-        ),
+        ],
         $stream
     );
 });
@@ -1628,9 +1628,9 @@ a custom `Server` response header like this:
 $http = new React\Http\HttpServer(function (ServerRequestInterface $request) {
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Server' => 'PHP/3'
-        )
+        ]
     );
 });
 ```
@@ -1643,9 +1643,9 @@ string value like this:
 $http = new React\Http\HttpServer(function (ServerRequestInterface $request) {
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Server' => ''
-        )
+        ]
     );
 });
 ```
@@ -1658,9 +1658,9 @@ like this:
 $http = new React\Http\HttpServer(function (ServerRequestInterface $request) {
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Date' => gmdate('D, d M Y H:i:s \G\M\T')
-        )
+        ]
     );
 });
 ```
@@ -1673,9 +1673,9 @@ like this:
 $http = new React\Http\HttpServer(function (ServerRequestInterface $request) {
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Date' => ''
-        )
+        ]
     );
 });
 ```
@@ -1871,16 +1871,16 @@ proxy servers etc.), you can explicitly pass a custom instance of the
 [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
 
 ```php
-$connector = new React\Socket\Connector(array(
+$connector = new React\Socket\Connector([
     'dns' => '127.0.0.1',
-    'tcp' => array(
+    'tcp' => [
         'bindto' => '192.168.10.1:0'
-    ),
-    'tls' => array(
+    ],
+    'tls' => [
         'verify_peer' => false,
         'verify_peer_name' => false
-    )
-));
+    ]
+]);
 
 $browser = new React\Http\Browser($connector);
 ```
@@ -1895,7 +1895,7 @@ given event loop instance.
 
 #### get()
 
-The `get(string $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+The `get(string $url, array $headers = []): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP GET request.
 
 ```php
@@ -1910,7 +1910,7 @@ See also [GET request client example](examples/01-client-get-request.php).
 
 #### post()
 
-The `post(string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+The `post(string $url, array $headers = [], string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP POST request.
 
 ```php
@@ -1958,12 +1958,12 @@ Loop::addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
 
-$browser->post($url, array('Content-Length' => '11'), $body);
+$browser->post($url, ['Content-Length' => '11'), $body);
 ```
 
 #### head()
 
-The `head(string $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+The `head(string $url, array $headers = []): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP HEAD request.
 
 ```php
@@ -1976,7 +1976,7 @@ $browser->head($url)->then(function (Psr\Http\Message\ResponseInterface $respons
 
 #### patch()
 
-The `patch(string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+The `patch(string $url, array $headers = [], string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP PATCH request.
 
 ```php
@@ -2005,12 +2005,12 @@ Loop::addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
 
-$browser->patch($url, array('Content-Length' => '11'), $body);
+$browser->patch($url, ['Content-Length' => '11'], $body);
 ```
 
 #### put()
 
-The `put(string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+The `put(string $url, array $headers = [], string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP PUT request.
 
 ```php
@@ -2041,12 +2041,12 @@ Loop::addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
 
-$browser->put($url, array('Content-Length' => '11'), $body);
+$browser->put($url, ['Content-Length' => '11'], $body);
 ```
 
 #### delete()
 
-The `delete(string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+The `delete(string $url, array $headers = [], string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP DELETE request.
 
 ```php
@@ -2059,7 +2059,7 @@ $browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $respo
 
 #### request()
 
-The `request(string $method, string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+The `request(string $method, string $url, array $headers = [], string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an arbitrary HTTP request.
 
 The preferred way to send an HTTP request is by using the above
@@ -2093,12 +2093,12 @@ Loop::addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
 
-$browser->request('POST', $url, array('Content-Length' => '11'), $body);
+$browser->request('POST', $url, ['Content-Length' => '11'], $body);
 ```
 
 #### requestStreaming()
 
-The `requestStreaming(string $method, string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+The `requestStreaming(string $method, string $url, array $headers = [], string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an arbitrary HTTP request and receive a streaming response without buffering the response body.
 
 The preferred way to send an HTTP request is by using the above
@@ -2157,7 +2157,7 @@ Loop::addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
 
-$browser->requestStreaming('POST', $url, array('Content-Length' => '11'), $body);
+$browser->requestStreaming('POST', $url, ['Content-Length' => '11'], $body);
 ```
 
 #### withTimeout()
@@ -2428,9 +2428,9 @@ represent an outgoing server response message.
 ```php
 $response = new React\Http\Message\Response(
     React\Http\Message\Response::STATUS_OK,
-    array(
+    [
         'Content-Type' => 'text/html'
-    ),
+    ],
     "<html>Hello world!</html>\n"
 );
 ```
@@ -2528,10 +2528,9 @@ values in the data must be encoded in UTF-8 (Unicode). If the encoding
 fails, this method will throw an `InvalidArgumentException`.
 
 By default, the given structured data will be encoded with the flags as
-shown above. This includes pretty printing (PHP 5.4+) and preserving
-zero fractions for `float` values (PHP 5.6.6+) to ease debugging. It is
-assumed any additional data overhead is usually compensated by using HTTP
-response compression.
+shown above. This includes pretty printing and preserving zero fractions
+for `float` values to ease debugging. It is assumed any additional data
+overhead is usually compensated by using HTTP response compression.
 
 If you want to use a different status code or custom HTTP response
 headers, you can manipulate the returned response object using the
@@ -2900,9 +2899,9 @@ $handler = function (Psr\Http\Message\ServerRequestInterface $request) {
 
     return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
-        array(
+        [
             'Content-Type' => 'text/plain'
-        ),
+        ],
         $name . ' uploaded ' . $uploaded
     );
 };
@@ -2990,8 +2989,7 @@ composer require react/http:^3@dev
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
 
 This project aims to run on any platform and thus does not require any PHP
-extensions and supports running on legacy PHP 5.3 through current PHP 8+ and
-HHVM.
+extensions and supports running on PHP 7.1 through current PHP 8+.
 It's *highly recommended to use the latest supported PHP version* for this project.
 
 ## Tests

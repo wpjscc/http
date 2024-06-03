@@ -32,12 +32,12 @@ class AbstractRequestTest extends TestCase
 {
     public function testCtorWithInvalidUriThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new RequestMock(
             'GET',
             null,
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
     }
@@ -47,12 +47,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriWithCustomHttpPort()
@@ -60,12 +60,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com:8080/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com:8080')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com:8080']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriWithCustomPortHttpOnHttpsPort()
@@ -73,12 +73,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com:443/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com:443')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com:443']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriWithCustomPortHttpsOnHttpPort()
@@ -86,12 +86,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'https://example.com:80/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com:80')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com:80']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriWithoutDefaultHttpPort()
@@ -99,12 +99,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com:80/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriWithoutDefaultHttpsPort()
@@ -112,12 +112,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'https://example.com:443/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriBeforeOtherHeadersExplicitlyGiven()
@@ -125,14 +125,14 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(
+            [
                 'User-Agent' => 'demo'
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            ],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com'), 'User-Agent' => array('demo')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com'], 'User-Agent' => ['demo']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromHeadersExplicitlyGiven()
@@ -140,14 +140,14 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://localhost/',
-            array(
+            [
                 'Host' => 'example.com:8080'
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            ],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com:8080')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com:8080']], $request->getHeaders());
     }
 
     public function testGetHeadersReturnsHostHeaderFromUriWhenHeadersExplicitlyGivenContainEmptyHostArray()
@@ -155,14 +155,14 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'https://example.com/',
-            array(
-                'Host' => array()
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [
+                'Host' => []
+            ],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $this->assertEquals(array('Host' => array('example.com')), $request->getHeaders());
+        $this->assertEquals(['Host' => ['example.com']], $request->getHeaders());
     }
 
     public function testGetRequestTargetReturnsPathAndQueryFromUri()
@@ -170,8 +170,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/demo?name=Alice',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -183,8 +183,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -196,8 +196,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/demo?name=Alice',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
         $request = $request->withRequestTarget('http://example.com/demo?name=Alice');
@@ -210,8 +210,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -226,8 +226,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
         $request = $request->withRequestTarget('/');
@@ -242,8 +242,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -258,8 +258,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -270,13 +270,13 @@ class AbstractRequestTest extends TestCase
 
     public function testGetUriReturnsUriInstanceGivenToCtor()
     {
-        $uri = $this->getMockBuilder('Psr\Http\Message\UriInterface')->getMock();
+        $uri = $this->createMock(UriInterface::class);
 
         $request = new RequestMock(
             'GET',
             $uri,
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -288,13 +288,13 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
         $uri = $request->getUri();
-        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $uri);
+        $this->assertInstanceOf(UriInterface::class, $uri);
         $this->assertEquals('http://example.com/', (string) $uri);
     }
 
@@ -303,12 +303,12 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
-        $uri = $this->getMockBuilder('Psr\Http\Message\UriInterface')->getMock();
+        $uri = $this->createMock(UriInterface::class);
         $new = $request->withUri($uri);
 
         $this->assertNotSame($request, $new);
@@ -318,13 +318,13 @@ class AbstractRequestTest extends TestCase
 
     public function testWithUriReturnsSameInstanceWhenUriIsUnchanged()
     {
-        $uri = $this->getMockBuilder('Psr\Http\Message\UriInterface')->getMock();
+        $uri = $this->createMock(UriInterface::class);
 
         $request = new RequestMock(
             'GET',
             $uri,
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -338,8 +338,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -348,7 +348,7 @@ class AbstractRequestTest extends TestCase
 
         $this->assertNotSame($request, $new);
         $this->assertEquals('http://localhost/', (string) $new->getUri());
-        $this->assertEquals(array('Host' => array('localhost')), $new->getHeaders());
+        $this->assertEquals(['Host' => ['localhost']], $new->getHeaders());
     }
 
     public function testWithUriReturnsNewInstanceWithHostHeaderChangedIfUriContainsHostWithCustomPort()
@@ -356,8 +356,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -366,7 +366,7 @@ class AbstractRequestTest extends TestCase
 
         $this->assertNotSame($request, $new);
         $this->assertEquals('http://localhost:8080/', (string) $new->getUri());
-        $this->assertEquals(array('Host' => array('localhost:8080')), $new->getHeaders());
+        $this->assertEquals(['Host' => ['localhost:8080']], $new->getHeaders());
     }
 
     public function testWithUriReturnsNewInstanceWithHostHeaderAddedAsFirstHeaderBeforeOthersIfUriContainsHost()
@@ -374,10 +374,10 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(
+            [
                 'User-Agent' => 'test'
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            ],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
         $request = $request->withoutHeader('Host');
@@ -387,7 +387,7 @@ class AbstractRequestTest extends TestCase
 
         $this->assertNotSame($request, $new);
         $this->assertEquals('http://localhost/', (string) $new->getUri());
-        $this->assertEquals(array('Host' => array('localhost'), 'User-Agent' => array('test')), $new->getHeaders());
+        $this->assertEquals(['Host' => ['localhost'], 'User-Agent' => ['test']], $new->getHeaders());
     }
 
     public function testWithUriReturnsNewInstanceWithHostHeaderUnchangedIfUriContainsNoHost()
@@ -395,8 +395,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -405,7 +405,7 @@ class AbstractRequestTest extends TestCase
 
         $this->assertNotSame($request, $new);
         $this->assertEquals('/path', (string) $new->getUri());
-        $this->assertEquals(array('Host' => array('example.com')), $new->getHeaders());
+        $this->assertEquals(['Host' => ['example.com']], $new->getHeaders());
     }
 
     public function testWithUriReturnsNewInstanceWithHostHeaderUnchangedIfPreserveHostIsTrue()
@@ -413,8 +413,8 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            [],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
 
@@ -423,7 +423,7 @@ class AbstractRequestTest extends TestCase
 
         $this->assertNotSame($request, $new);
         $this->assertEquals('http://localhost/', (string) $new->getUri());
-        $this->assertEquals(array('Host' => array('example.com')), $new->getHeaders());
+        $this->assertEquals(['Host' => ['example.com']], $new->getHeaders());
     }
 
     public function testWithUriReturnsNewInstanceWithHostHeaderAddedAsFirstHeaderNoMatterIfPreserveHostIsTrue()
@@ -431,10 +431,10 @@ class AbstractRequestTest extends TestCase
         $request = new RequestMock(
             'GET',
             'http://example.com/',
-            array(
+            [
                 'User-Agent' => 'test'
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock(),
+            ],
+            $this->createMock(StreamInterface::class),
             '1.1'
         );
         $request = $request->withoutHeader('Host');
@@ -444,6 +444,6 @@ class AbstractRequestTest extends TestCase
 
         $this->assertNotSame($request, $new);
         $this->assertEquals('http://example.com/', (string) $new->getUri());
-        $this->assertEquals(array('Host' => array('example.com'), 'User-Agent' => array('test')), $new->getHeaders());
+        $this->assertEquals(['Host' => ['example.com'], 'User-Agent' => ['test']], $new->getHeaders());
     }
 }

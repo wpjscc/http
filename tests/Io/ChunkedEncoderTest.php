@@ -3,7 +3,9 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\ChunkedEncoder;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Stream\WritableStreamInterface;
 use React\Tests\Http\TestCase;
 
 class ChunkedEncoderTest extends TestCase
@@ -23,19 +25,19 @@ class ChunkedEncoderTest extends TestCase
     public function testChunked()
     {
         $this->chunkedStream->on('data', $this->expectCallableOnceWith("5\r\nhello\r\n"));
-        $this->input->emit('data', array('hello'));
+        $this->input->emit('data', ['hello']);
     }
 
     public function testEmptyString()
     {
         $this->chunkedStream->on('data', $this->expectCallableNever());
-        $this->input->emit('data', array(''));
+        $this->input->emit('data', ['']);
     }
 
     public function testBiggerStringToCheckHexValue()
     {
         $this->chunkedStream->on('data', $this->expectCallableOnceWith("1a\r\nabcdefghijklmnopqrstuvwxyz\r\n"));
-        $this->input->emit('data', array('abcdefghijklmnopqrstuvwxyz'));
+        $this->input->emit('data', ['abcdefghijklmnopqrstuvwxyz']);
     }
 
     public function testHandleClose()
@@ -52,14 +54,14 @@ class ChunkedEncoderTest extends TestCase
         $this->chunkedStream->on('error', $this->expectCallableOnce());
         $this->chunkedStream->on('close', $this->expectCallableOnce());
 
-        $this->input->emit('error', array(new \RuntimeException()));
+        $this->input->emit('error', [new \RuntimeException()]);
 
         $this->assertFalse($this->chunkedStream->isReadable());
     }
 
     public function testPauseStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $parser = new ChunkedEncoder($input);
@@ -68,7 +70,7 @@ class ChunkedEncoderTest extends TestCase
 
     public function testResumeStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $parser = new ChunkedEncoder($input);
@@ -78,7 +80,7 @@ class ChunkedEncoderTest extends TestCase
 
     public function testPipeStream()
     {
-        $dest = $this->getMockBuilder('React\Stream\WritableStreamInterface')->getMock();
+        $dest = $this->createMock(WritableStreamInterface::class);
 
         $ret = $this->chunkedStream->pipe($dest);
 

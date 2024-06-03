@@ -25,8 +25,8 @@ class AbstractMessageTest extends TestCase
     {
         $message = new MessageMock(
             '1.1',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            [],
+            $this->createMock(StreamInterface::class)
         );
 
         $new = $message->withProtocolVersion('1.0');
@@ -39,8 +39,8 @@ class AbstractMessageTest extends TestCase
     {
         $message = new MessageMock(
             '1.1',
-            array(),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            [],
+            $this->createMock(StreamInterface::class)
         );
 
         $new = $message->withProtocolVersion('1.1');
@@ -52,16 +52,16 @@ class AbstractMessageTest extends TestCase
     {
         $message = new MessageMock(
             '1.1',
-            array(
+            [
                 'Content-Type' => 'text/plain'
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            ],
+            $this->createMock(StreamInterface::class)
         );
 
-        $this->assertEquals(array('Content-Type' => array('text/plain')), $message->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/plain']], $message->getHeaders());
 
-        $this->assertEquals(array('text/plain'), $message->getHeader('Content-Type'));
-        $this->assertEquals(array('text/plain'), $message->getHeader('CONTENT-type'));
+        $this->assertEquals(['text/plain'], $message->getHeader('Content-Type'));
+        $this->assertEquals(['text/plain'], $message->getHeader('CONTENT-type'));
 
         $this->assertEquals('text/plain', $message->getHeaderLine('Content-Type'));
         $this->assertEquals('text/plain', $message->getHeaderLine('CONTENT-Type'));
@@ -72,50 +72,50 @@ class AbstractMessageTest extends TestCase
         $new = $message->withHeader('Content-Type', 'text/plain');
         $this->assertSame($message, $new);
 
-        $new = $message->withHeader('Content-Type', array('text/plain'));
+        $new = $message->withHeader('Content-Type', ['text/plain']);
         $this->assertSame($message, $new);
 
         $new = $message->withHeader('content-type', 'text/plain');
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array('content-type' => array('text/plain')), $new->getHeaders());
-        $this->assertEquals(array('Content-Type' => array('text/plain')), $message->getHeaders());
+        $this->assertEquals(['content-type' => ['text/plain']], $new->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/plain']], $message->getHeaders());
 
         $new = $message->withHeader('Content-Type', 'text/html');
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array('Content-Type' => array('text/html')), $new->getHeaders());
-        $this->assertEquals(array('Content-Type' => array('text/plain')), $message->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/html']], $new->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/plain']], $message->getHeaders());
 
-        $new = $message->withHeader('Content-Type', array('text/html'));
+        $new = $message->withHeader('Content-Type', ['text/html']);
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array('Content-Type' => array('text/html')), $new->getHeaders());
-        $this->assertEquals(array('Content-Type' => array('text/plain')), $message->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/html']], $new->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/plain']], $message->getHeaders());
 
-        $new = $message->withAddedHeader('Content-Type', array());
+        $new = $message->withAddedHeader('Content-Type', []);
         $this->assertSame($message, $new);
 
         $new = $message->withoutHeader('Content-Type');
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array(), $new->getHeaders());
-        $this->assertEquals(array('Content-Type' => array('text/plain')), $message->getHeaders());
+        $this->assertEquals([], $new->getHeaders());
+        $this->assertEquals(['Content-Type' => ['text/plain']], $message->getHeaders());
     }
 
     public function testHeaderWithMultipleValues()
     {
         $message = new MessageMock(
             '1.1',
-            array(
-                'Set-Cookie' => array(
+            [
+                'Set-Cookie' => [
                     'a=1',
                     'b=2'
-                )
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+                ]
+            ],
+            $this->createMock(StreamInterface::class)
         );
 
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2')), $message->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2']], $message->getHeaders());
 
-        $this->assertEquals(array('a=1', 'b=2'), $message->getHeader('Set-Cookie'));
-        $this->assertEquals(array('a=1', 'b=2'), $message->getHeader('Set-Cookie'));
+        $this->assertEquals(['a=1', 'b=2'], $message->getHeader('Set-Cookie'));
+        $this->assertEquals(['a=1', 'b=2'], $message->getHeader('Set-Cookie'));
 
         $this->assertEquals('a=1, b=2', $message->getHeaderLine('Set-Cookie'));
         $this->assertEquals('a=1, b=2', $message->getHeaderLine('Set-Cookie'));
@@ -123,49 +123,49 @@ class AbstractMessageTest extends TestCase
         $this->assertTrue($message->hasHeader('Set-Cookie'));
         $this->assertTrue($message->hasHeader('Set-Cookie'));
 
-        $new = $message->withHeader('Set-Cookie', array('a=1', 'b=2'));
+        $new = $message->withHeader('Set-Cookie', ['a=1', 'b=2']);
         $this->assertSame($message, $new);
 
-        $new = $message->withHeader('Set-Cookie', array('a=1', 'b=2', 'c=3'));
+        $new = $message->withHeader('Set-Cookie', ['a=1', 'b=2', 'c=3']);
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2', 'c=3')), $new->getHeaders());
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2')), $message->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2', 'c=3']], $new->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2']], $message->getHeaders());
 
-        $new = $message->withAddedHeader('Set-Cookie', array());
+        $new = $message->withAddedHeader('Set-Cookie', []);
         $this->assertSame($message, $new);
 
         $new = $message->withAddedHeader('Set-Cookie', 'c=3');
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2', 'c=3')), $new->getHeaders());
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2')), $message->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2', 'c=3']], $new->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2']], $message->getHeaders());
 
-        $new = $message->withAddedHeader('Set-Cookie', array('c=3'));
+        $new = $message->withAddedHeader('Set-Cookie', ['c=3']);
         $this->assertNotSame($message, $new);
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2', 'c=3')), $new->getHeaders());
-        $this->assertEquals(array('Set-Cookie' => array('a=1', 'b=2')), $message->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2', 'c=3']], $new->getHeaders());
+        $this->assertEquals(['Set-Cookie' => ['a=1', 'b=2']], $message->getHeaders());
     }
 
     public function testHeaderWithEmptyValue()
     {
         $message = new MessageMock(
             '1.1',
-            array(
-                'Content-Type' => array()
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+            [
+                'Content-Type' => []
+            ],
+            $this->createMock(StreamInterface::class)
         );
 
-        $this->assertEquals(array(), $message->getHeaders());
+        $this->assertEquals([], $message->getHeaders());
 
-        $this->assertEquals(array(), $message->getHeader('Content-Type'));
+        $this->assertEquals([], $message->getHeader('Content-Type'));
         $this->assertEquals('', $message->getHeaderLine('Content-Type'));
         $this->assertFalse($message->hasHeader('Content-Type'));
 
-        $new = $message->withHeader('Empty', array());
+        $new = $message->withHeader('Empty', []);
         $this->assertSame($message, $new);
         $this->assertFalse($new->hasHeader('Empty'));
 
-        $new = $message->withAddedHeader('Empty', array());
+        $new = $message->withAddedHeader('Empty', []);
         $this->assertSame($message, $new);
         $this->assertFalse($new->hasHeader('Empty'));
 
@@ -178,28 +178,28 @@ class AbstractMessageTest extends TestCase
     {
         $message = new MessageMock(
             '1.1',
-            array(
+            [
                 'SET-Cookie' => 'a=1',
-                'set-cookie' => array('b=2'),
-                'set-COOKIE' => array()
-            ),
-            $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock()
+                'set-cookie' => ['b=2'],
+                'set-COOKIE' => []
+            ],
+            $this->createMock(StreamInterface::class)
         );
 
-        $this->assertEquals(array('set-cookie' => array('a=1', 'b=2')), $message->getHeaders());
-        $this->assertEquals(array('a=1', 'b=2'), $message->getHeader('Set-Cookie'));
+        $this->assertEquals(['set-cookie' => ['a=1', 'b=2']], $message->getHeaders());
+        $this->assertEquals(['a=1', 'b=2'], $message->getHeader('Set-Cookie'));
     }
 
     public function testWithBodyReturnsNewInstanceWhenBodyIsChanged()
     {
-        $body = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body = $this->createMock(StreamInterface::class);
         $message = new MessageMock(
             '1.1',
-            array(),
+            [],
             $body
         );
 
-        $body2 = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body2 = $this->createMock(StreamInterface::class);
         $new = $message->withBody($body2);
         $this->assertNotSame($message, $new);
         $this->assertSame($body2, $new->getBody());
@@ -208,10 +208,10 @@ class AbstractMessageTest extends TestCase
 
     public function testWithBodyReturnsSameInstanceWhenBodyIsUnchanged()
     {
-        $body = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
+        $body = $this->createMock(StreamInterface::class);
         $message = new MessageMock(
             '1.1',
-            array(),
+            [],
             $body
         );
 

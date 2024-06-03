@@ -4,12 +4,17 @@ namespace React\Tests\Http;
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
+use React\EventLoop\LoopInterface;
 use React\Http\HttpServer;
 use React\Http\Io\IniUtil;
+use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
+use React\Http\Middleware\RequestBodyBufferMiddleware;
 use React\Http\Middleware\StreamingRequestMiddleware;
-use React\Promise;
 use React\Promise\Deferred;
+use React\Socket\Connection;
 use React\Stream\ReadableStreamInterface;
+use function React\Async\await;
+use function React\Promise\reject;
 
 final class HttpServerTest extends TestCase
 {
@@ -24,10 +29,10 @@ final class HttpServerTest extends TestCase
      */
     public function setUpConnectionMockAndSocket()
     {
-        $this->connection = $this->getMockBuilder('React\Socket\Connection')
+        $this->connection = $this->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
             ->setMethods(
-                array(
+                [
                     'write',
                     'end',
                     'close',
@@ -38,7 +43,7 @@ final class HttpServerTest extends TestCase
                     'getRemoteAddress',
                     'getLocalAddress',
                     'pipe'
-                )
+                ]
             )
             ->getMock();
 
@@ -64,12 +69,12 @@ final class HttpServerTest extends TestCase
         $ref->setAccessible(true);
         $loop = $ref->getValue($clock);
 
-        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+        $this->assertInstanceOf(LoopInterface::class, $loop);
     }
 
     public function testInvalidCallbackFunctionLeadsToException()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         new HttpServer('invalid');
     }
 
@@ -81,23 +86,20 @@ final class HttpServerTest extends TestCase
         });
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("GET / HTTP/1.0\r\n\r\n"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["GET / HTTP/1.0\r\n\r\n"]);
 
         $this->assertSame(1, $called);
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testSimpleRequestCallsArrayRequestHandlerOnce()
     {
         $this->called = null;
-        $http = new HttpServer(array($this, 'helperCallableOnce'));
+        $http = new HttpServer([$this, 'helperCallableOnce']);
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("GET / HTTP/1.0\r\n\r\n"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["GET / HTTP/1.0\r\n\r\n"]);
 
         $this->assertSame(1, $this->called);
     }
@@ -124,8 +126,8 @@ final class HttpServerTest extends TestCase
         );
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("GET / HTTP/1.0\r\n\r\n"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["GET / HTTP/1.0\r\n\r\n"]);
 
         $this->assertSame('beforeokafter', $called);
     }
@@ -138,10 +140,10 @@ final class HttpServerTest extends TestCase
         });
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("POST / HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 7\r\n\r\nfoo=bar"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["POST / HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 7\r\n\r\nfoo=bar"]);
 
-        $request = \React\Async\await($deferred->promise());
+        $request = await($deferred->promise());
         assert($request instanceof ServerRequestInterface);
 
         $form = $request->getParsedBody();
@@ -149,7 +151,7 @@ final class HttpServerTest extends TestCase
         $this->assertTrue(isset($form['foo']));
         $this->assertEquals('bar', $form['foo']);
 
-        $this->assertEquals(array(), $request->getUploadedFiles());
+        $this->assertEquals([], $request->getUploadedFiles());
 
         $body = $request->getBody();
 
@@ -166,20 +168,19 @@ final class HttpServerTest extends TestCase
         });
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
-        $connection = $this->connection;
         $data = $this->createPostFileUploadRequest();
-        Loop::addPeriodicTimer(0.01, function ($timer) use (&$data, $connection) {
+        Loop::addPeriodicTimer(0.01, function ($timer) use (&$data) {
             $line = array_shift($data);
-            $connection->emit('data', array($line));
+            $this->connection->emit('data', [$line]);
 
             if (count($data) === 0) {
                 Loop::cancelTimer($timer);
             }
         });
 
-        $request = \React\Async\await($deferred->promise());
+        $request = await($deferred->promise());
         assert($request instanceof ServerRequestInterface);
 
         $this->assertEmpty($request->getParsedBody());
@@ -209,15 +210,15 @@ final class HttpServerTest extends TestCase
         });
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("POST / HTTP/1.0\r\nContent-Type: application/json\r\nContent-Length: 6\r\n\r\n[true]"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["POST / HTTP/1.0\r\nContent-Type: application/json\r\nContent-Length: 6\r\n\r\n[true]"]);
 
-        $request = \React\Async\await($deferred->promise());
+        $request = await($deferred->promise());
         assert($request instanceof ServerRequestInterface);
 
         $this->assertNull($request->getParsedBody());
 
-        $this->assertSame(array(), $request->getUploadedFiles());
+        $this->assertSame([], $request->getUploadedFiles());
 
         $body = $request->getBody();
 
@@ -234,8 +235,8 @@ final class HttpServerTest extends TestCase
         });
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("GET / HTTP/1.0\r\n\r\n"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["GET / HTTP/1.0\r\n\r\n"]);
 
         $this->assertEquals(false, $streaming);
     }
@@ -251,8 +252,8 @@ final class HttpServerTest extends TestCase
         );
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
-        $this->connection->emit('data', array("GET / HTTP/1.0\r\n\r\n"));
+        $this->socket->emit('connection', [$this->connection]);
+        $this->connection->emit('data', ["GET / HTTP/1.0\r\n\r\n"]);
 
         $this->assertEquals(true, $streaming);
     }
@@ -262,20 +263,20 @@ final class HttpServerTest extends TestCase
         $exception = new \Exception();
         $capturedException = null;
         $http = new HttpServer(function () use ($exception) {
-            return Promise\reject($exception);
+            return reject($exception);
         });
         $http->on('error', function ($error) use (&$capturedException) {
             $capturedException = $error;
         });
 
         $http->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', [$this->connection]);
 
         $data = $this->createPostFileUploadRequest();
-        $this->connection->emit('data', array(implode('', $data)));
+        $this->connection->emit('data', [implode('', $data)]);
 
-        $this->assertInstanceOf('RuntimeException', $capturedException);
-        $this->assertInstanceOf('Exception', $capturedException->getPrevious());
+        $this->assertInstanceOf(\RuntimeException::class, $capturedException);
+        $this->assertInstanceOf(\Exception::class, $capturedException->getPrevious());
         $this->assertSame($exception, $capturedException->getPrevious());
     }
 
@@ -283,7 +284,7 @@ final class HttpServerTest extends TestCase
     {
         $boundary = "---------------------------5844729766471062541057622570";
 
-        $data = array();
+        $data = [];
         $data[] = "POST / HTTP/1.1\r\n";
         $data[] = "Host: localhost\r\n";
         $data[] = "Content-Type: multipart/form-data; boundary=" . $boundary . "\r\n";
@@ -300,25 +301,23 @@ final class HttpServerTest extends TestCase
         return $data;
     }
 
-    public function provideIniSettingsForConcurrency()
+    public static function provideIniSettingsForConcurrency()
     {
-        return array(
-            'default settings' => array(
-                '128M',
-                '64K', // 8M capped at maximum
-                1024
-            ),
-            'unlimited memory_limit has no concurrency limit' => array(
-                '-1',
-                '8M',
-                null
-            ),
-            'small post_max_size results in high concurrency' => array(
-                '128M',
-                '1k',
-                65536
-            )
-        );
+        yield 'default settings' => [
+            '128M',
+            '64K', // 8M capped at maximum
+            1024
+        ];
+        yield 'unlimited memory_limit has no concurrency limit' => [
+            '-1',
+            '8M',
+            null
+        ];
+        yield 'small post_max_size results in high concurrency' => [
+            '128M',
+            '1k',
+            65536
+        ];
     }
 
     /**
@@ -404,7 +403,7 @@ final class HttpServerTest extends TestCase
         $middleware = $ref->getValue($middlewareRunner);
 
         $this->assertTrue(is_array($middleware));
-        $this->assertInstanceOf('React\Http\Middleware\RequestBodyBufferMiddleware', $middleware[0]);
+        $this->assertInstanceOf(RequestBodyBufferMiddleware::class, $middleware[0]);
     }
 
     public function testConstructServerWithMemoryLimitDoesLimitConcurrency()
@@ -434,7 +433,7 @@ final class HttpServerTest extends TestCase
         $middleware = $ref->getValue($middlewareRunner);
 
         $this->assertTrue(is_array($middleware));
-        $this->assertInstanceOf('React\Http\Middleware\LimitConcurrentRequestsMiddleware', $middleware[0]);
+        $this->assertInstanceOf(LimitConcurrentRequestsMiddleware::class, $middleware[0]);
     }
 
     public function testConstructFiltersOutConfigurationMiddlewareBefore()

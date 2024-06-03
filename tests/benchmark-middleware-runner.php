@@ -13,7 +13,7 @@ require __DIR__ . '/../vendor/autoload.php';
 $middleware = function (ServerRequestInterface $request, $next) {
     return $next($request);
 };
-$middlewareList = array();
+$middlewareList = [];
 for ($i = 0; $i < MIDDLEWARE_COUNT; $i++) {
     $middlewareList[] = $middleware;
 }

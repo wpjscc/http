@@ -3,6 +3,7 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\EmptyBodyStream;
+use React\Stream\WritableStreamInterface;
 use React\Tests\Http\TestCase;
 
 class EmptyBodyStreamTest extends TestCase
@@ -36,7 +37,7 @@ class EmptyBodyStreamTest extends TestCase
 
     public function testPipeStreamReturnsDestinationStream()
     {
-        $dest = $this->getMockBuilder('React\Stream\WritableStreamInterface')->getMock();
+        $dest = $this->createMock(WritableStreamInterface::class);
 
         $ret = $this->bodyStream->pipe($dest);
 
@@ -65,18 +66,18 @@ class EmptyBodyStreamTest extends TestCase
         $this->bodyStream->close();
         $this->bodyStream->close();
 
-        $this->assertEquals(array(), $this->bodyStream->listeners('close'));
+        $this->assertEquals([], $this->bodyStream->listeners('close'));
     }
 
     public function testTell()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->tell();
     }
 
     public function testEof()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->eof();
     }
 
@@ -87,13 +88,13 @@ class EmptyBodyStreamTest extends TestCase
 
     public function testWrite()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->write('');
     }
 
     public function testRead()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->read(1);
     }
 
@@ -104,7 +105,7 @@ class EmptyBodyStreamTest extends TestCase
 
     public function testGetMetaDataWithoutKeyReturnsEmptyArray()
     {
-        $this->assertSame(array(), $this->bodyStream->getMetadata());
+        $this->assertSame([], $this->bodyStream->getMetadata());
     }
 
     public function testGetMetaDataWithKeyReturnsNull()
@@ -126,13 +127,13 @@ class EmptyBodyStreamTest extends TestCase
 
     public function testSeek()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->seek('');
     }
 
     public function testRewind()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->rewind();
     }
 

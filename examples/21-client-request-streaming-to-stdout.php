@@ -17,7 +17,7 @@ $client = new Browser();
 $out = new WritableResourceStream(STDOUT);
 $info = new WritableResourceStream(STDERR);
 
-$url = isset($argv[1]) ? $argv[1] : 'http://google.com/';
+$url = $argv[1] ?? 'http://google.com/';
 $info->write('Requesting ' . $url . '…' . PHP_EOL);
 
 $client->requestStreaming('GET', $url)->then(function (ResponseInterface $response) use ($info, $out) {

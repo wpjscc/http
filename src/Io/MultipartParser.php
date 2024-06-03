@@ -36,7 +36,7 @@ final class MultipartParser
     /**
      * ini setting "max_input_vars"
      *
-     * Does not exist in PHP < 5.3.9 or HHVM, so assume PHP's default 1000 here.
+     * Assume PHP' default of 1000 here.
      *
      * @var int
      * @link http://php.net/manual/en/info.configuration.php#ini.max-input-vars
@@ -46,7 +46,7 @@ final class MultipartParser
     /**
      * ini setting "max_input_nesting_level"
      *
-     * Does not exist in HHVM, but assumes hard coded to 64 (PHP's default).
+     * Assume PHP's default of 64 here.
      *
      * @var int
      * @link http://php.net/manual/en/info.configuration.php#ini.max-input-nesting-level
@@ -81,14 +81,8 @@ final class MultipartParser
      */
     public function __construct($uploadMaxFilesize = null, $maxFileUploads = null)
     {
-        $var = \ini_get('max_input_vars');
-        if ($var !== false) {
-            $this->maxInputVars = (int)$var;
-        }
-        $var = \ini_get('max_input_nesting_level');
-        if ($var !== false) {
-            $this->maxInputNestingLevel = (int)$var;
-        }
+        $this->maxInputVars = (int) \ini_get('max_input_vars');
+        $this->maxInputNestingLevel = (int) \ini_get('max_input_nesting_level');
 
         if ($uploadMaxFilesize === null) {
             $uploadMaxFilesize = \ini_get('upload_max_filesize');
@@ -172,7 +166,7 @@ final class MultipartParser
             $this->parseFile(
                 $name,
                 $filename,
-                isset($headers['content-type'][0]) ? $headers['content-type'][0] : null,
+                $headers['content-type'][0] ?? null,
                 $body
             );
         } else {
@@ -274,7 +268,7 @@ final class MultipartParser
 
     private function parseHeaders($header)
     {
-        $headers = array();
+        $headers = [];
 
         foreach (\explode("\r\n", \trim($header)) as $line) {
             $parts = \explode(':', $line, 2);
@@ -321,12 +315,12 @@ final class MultipartParser
             $previousChunkKey = $chunkKey;
 
             if ($previousChunkKey === '') {
-                $parent[] = array();
+                $parent[] = [];
                 \end($parent);
                 $parent = &$parent[\key($parent)];
             } else {
                 if (!isset($parent[$previousChunkKey]) || !\is_array($parent[$previousChunkKey])) {
-                    $parent[$previousChunkKey] = array();
+                    $parent[$previousChunkKey] = [];
                 }
                 $parent = &$parent[$previousChunkKey];
             }

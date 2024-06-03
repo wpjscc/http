@@ -45,16 +45,7 @@ final class Uri implements UriInterface
      */
     public function __construct($uri)
     {
-        // @codeCoverageIgnoreStart
-        if (\PHP_VERSION_ID < 50407 && \strpos($uri, '//') === 0) {
-            // @link https://3v4l.org/UrAQP
-            $parts = \parse_url('http:' . $uri);
-            unset($parts['schema']);
-        } else {
-            $parts = \parse_url($uri);
-        }
-        // @codeCoverageIgnoreEnd
-
+        $parts = \parse_url($uri);
         if ($parts === false || (isset($parts['scheme']) && !\preg_match('#^[a-z]+$#i', $parts['scheme'])) || (isset($parts['host']) && \preg_match('#[\s_%+]#', $parts['host']))) {
             throw new \InvalidArgumentException('Invalid URI given');
         }
@@ -63,8 +54,8 @@ final class Uri implements UriInterface
             $this->scheme = \strtolower($parts['scheme']);
         }
 
-        if (isset($parts['user']) || isset($parts['pass'])) {
-            $this->userInfo = $this->encode(isset($parts['user']) ? $parts['user'] : '', \PHP_URL_USER) . (isset($parts['pass']) ? ':' . $this->encode($parts['pass'], \PHP_URL_PASS) : '');
+        if (isset($parts['user'])) {
+            $this->userInfo = $this->encode($parts['user'], \PHP_URL_USER) . (isset($parts['pass']) ? ':' . $this->encode($parts['pass'], \PHP_URL_PASS) : '');
         }
 
         if (isset($parts['host'])) {
@@ -310,7 +301,7 @@ final class Uri implements UriInterface
         if ($rel->getAuthority() !== '') {
             $reset = true;
             $userInfo = \explode(':', $rel->getUserInfo(), 2);
-            $new = $base->withUserInfo($userInfo[0], isset($userInfo[1]) ? $userInfo[1]: null)->withHost($rel->getHost())->withPort($rel->getPort());
+            $new = $base->withUserInfo($userInfo[0], $userInfo[1] ?? null)->withHost($rel->getHost())->withPort($rel->getPort());
         }
 
         if ($reset && $rel->getPath() === '') {
@@ -343,7 +334,7 @@ final class Uri implements UriInterface
      */
     private static function removeDotSegments($path)
     {
-        $segments = array();
+        $segments = [];
         foreach (\explode('/', $path) as $segment) {
             if ($segment === '..') {
                 \array_pop($segments);

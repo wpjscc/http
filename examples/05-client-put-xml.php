@@ -14,9 +14,9 @@ $child->name = 'Christian Lück';
 
 $client->put(
     'https://httpbingo.org/put',
-    array(
+    [
         'Content-Type' => 'text/xml'
-    ),
+    ],
     $xml->asXML()
 )->then(function (ResponseInterface $response) {
     echo (string) $response->getBody();

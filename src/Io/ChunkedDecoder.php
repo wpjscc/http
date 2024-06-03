@@ -31,10 +31,10 @@ class ChunkedDecoder extends EventEmitter implements ReadableStreamInterface
     {
         $this->input = $input;
 
-        $this->input->on('data', array($this, 'handleData'));
-        $this->input->on('end', array($this, 'handleEnd'));
-        $this->input->on('error', array($this, 'handleError'));
-        $this->input->on('close', array($this, 'close'));
+        $this->input->on('data', [$this, 'handleData']);
+        $this->input->on('end', [$this, 'handleEnd']);
+        $this->input->on('error', [$this, 'handleError']);
+        $this->input->on('close', [$this, 'close']);
     }
 
     public function isReadable()
@@ -52,7 +52,7 @@ class ChunkedDecoder extends EventEmitter implements ReadableStreamInterface
         $this->input->resume();
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = array())
+    public function pipe(WritableStreamInterface $dest, array $options = [])
     {
         Util::pipe($this, $dest, $options);
 
@@ -86,7 +86,7 @@ class ChunkedDecoder extends EventEmitter implements ReadableStreamInterface
     /** @internal */
     public function handleError(Exception $e)
     {
-        $this->emit('error', array($e));
+        $this->emit('error', [$e]);
         $this->close();
     }
 
@@ -139,7 +139,7 @@ class ChunkedDecoder extends EventEmitter implements ReadableStreamInterface
 
             if ($chunk !== '') {
                 $this->transferredSize += \strlen($chunk);
-                $this->emit('data', array($chunk));
+                $this->emit('data', [$chunk]);
                 $this->buffer = (string)\substr($this->buffer, \strlen($chunk));
             }
 

@@ -22,10 +22,10 @@ abstract class AbstractMessage implements MessageInterface
     const REGEX_HEADERS = '/^([^()<>@,;:\\\"\/\[\]?={}\x00-\x20\x7F]++):[\x20\x09]*+((?:[\x20\x09]*+[\x21-\x7E\x80-\xFF]++)*+)[\x20\x09]*+[\r]?+\n/m';
 
     /** @var array<string,string[]> */
-    private $headers = array();
+    private $headers = [];
 
     /** @var array<string,string> */
-    private $headerNamesLowerCase = array();
+    private $headerNamesLowerCase = [];
 
     /** @var string */
     private $protocolVersion;
@@ -41,13 +41,13 @@ abstract class AbstractMessage implements MessageInterface
     protected function __construct($protocolVersion, array $headers, StreamInterface $body)
     {
         foreach ($headers as $name => $value) {
-            if ($value !== array()) {
+            if ($value !== []) {
                 if (\is_array($value)) {
                     foreach ($value as &$one) {
                         $one = (string) $one;
                     }
                 } else {
-                    $value = array((string) $value);
+                    $value = [(string) $value];
                 }
 
                 $lower = \strtolower($name);
@@ -95,7 +95,7 @@ abstract class AbstractMessage implements MessageInterface
     public function getHeader($name)
     {
         $lower = \strtolower($name);
-        return isset($this->headerNamesLowerCase[$lower]) ? $this->headers[$this->headerNamesLowerCase[$lower]] : array();
+        return isset($this->headerNamesLowerCase[$lower]) ? $this->headers[$this->headerNamesLowerCase[$lower]] : [];
     }
 
     public function getHeaderLine($name)
@@ -105,14 +105,14 @@ abstract class AbstractMessage implements MessageInterface
 
     public function withHeader($name, $value)
     {
-        if ($value === array()) {
+        if ($value === []) {
             return $this->withoutHeader($name);
         } elseif (\is_array($value)) {
             foreach ($value as &$one) {
                 $one = (string) $one;
             }
         } else {
-            $value = array((string) $value);
+            $value = [(string) $value];
         }
 
         $lower = \strtolower($name);
@@ -133,11 +133,11 @@ abstract class AbstractMessage implements MessageInterface
 
     public function withAddedHeader($name, $value)
     {
-        if ($value === array()) {
+        if ($value === []) {
             return $this;
         }
 
-        return $this->withHeader($name, \array_merge($this->getHeader($name), \is_array($value) ? $value : array($value)));
+        return $this->withHeader($name, \array_merge($this->getHeader($name), \is_array($value) ? $value : [$value]));
     }
 
     public function withoutHeader($name)

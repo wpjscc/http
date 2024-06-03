@@ -10,6 +10,7 @@ use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use React\Tests\Http\TestCase;
 
@@ -114,20 +115,19 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
     {
         $middleware = new LimitConcurrentRequestsMiddleware(1);
 
-        $this->setExpectedException('RuntimeException', 'demo');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('demo');
         $middleware(new ServerRequest('GET', 'https://example.com/'), function () {
             throw new \RuntimeException('demo');
         });
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testThrowsErrorDirectlyFromMiddlewareWhenBelowLimit()
     {
         $middleware = new LimitConcurrentRequestsMiddleware(1);
 
-        $this->setExpectedException('Error', 'demo');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('demo');
         $middleware(new ServerRequest('GET', 'https://example.com/'), function () {
             throw new \Error('demo');
         });
@@ -162,16 +162,16 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
 
     public function testStreamDoesNotPauseOrResumeWhenBelowLimit()
     {
-        $body = $this->getMockBuilder('React\Http\Io\HttpBodyStream')->disableOriginalConstructor()->getMock();
+        $body = $this->createMock(HttpBodyStream::class);
         $body->expects($this->never())->method('pause');
         $body->expects($this->never())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
-        $limitHandlers(new ServerRequest('GET', 'https://example.com/', array(), $body), function () {});
+        $limitHandlers(new ServerRequest('GET', 'https://example.com/', [], $body), function () {});
     }
 
     public function testStreamDoesPauseWhenAboveLimit()
     {
-        $body = $this->getMockBuilder('React\Http\Io\HttpBodyStream')->disableOriginalConstructor()->getMock();
+        $body = $this->createMock(HttpBodyStream::class);
         $body->expects($this->once())->method('pause');
         $body->expects($this->never())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
@@ -180,12 +180,12 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
             return new Promise(function () { });
         });
 
-        $limitHandlers(new ServerRequest('GET', 'https://example.com/', array(), $body), function () {});
+        $limitHandlers(new ServerRequest('GET', 'https://example.com/', [], $body), function () {});
     }
 
     public function testStreamDoesPauseAndThenResumeWhenDequeued()
     {
-        $body = $this->getMockBuilder('React\Http\Io\HttpBodyStream')->disableOriginalConstructor()->getMock();
+        $body = $this->createMock(HttpBodyStream::class);
         $body->expects($this->once())->method('pause');
         $body->expects($this->once())->method('resume');
         $limitHandlers = new LimitConcurrentRequestsMiddleware(1);
@@ -198,7 +198,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         assert($promise instanceof PromiseInterface);
         $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
-        $limitHandlers(new ServerRequest('GET', 'https://example.com/', array(), $body), function () {});
+        $limitHandlers(new ServerRequest('GET', 'https://example.com/', [], $body), function () {});
 
         $deferred->reject(new \RuntimeException());
     }
@@ -208,7 +208,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -227,7 +227,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 5)
         );
 
@@ -249,7 +249,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -264,7 +264,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -283,7 +283,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -306,7 +306,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -334,7 +334,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -357,7 +357,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -379,7 +379,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -403,7 +403,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
         );
 
@@ -425,7 +425,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             'hello'
             );
 
@@ -448,7 +448,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 5)
         );
 
@@ -470,11 +470,11 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $deferred->reject(new \RuntimeException());
 
         $this->assertNotSame($request, $req);
-        $this->assertInstanceOf('Psr\Http\Message\ServerRequestInterface', $req);
+        $this->assertInstanceOf(ServerRequestInterface::class, $req);
 
         $body = $req->getBody();
-        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
-        /* @var $body \React\Stream\ReadableStreamInterface */
+        $this->assertInstanceOf(ReadableStreamInterface::class, $body);
+        /* @var $body ReadableStreamInterface */
 
         $this->assertEquals(5, $body->getSize());
 
@@ -497,7 +497,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 
@@ -527,7 +527,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 
@@ -558,7 +558,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 
@@ -589,7 +589,7 @@ final class LimitConcurrentRequestsMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'http://example.com/',
-            array(),
+            [],
             new HttpBodyStream($stream, 10)
         );
 

@@ -50,7 +50,7 @@ abstract class AbstractRequest extends AbstractMessage implements RequestInterfa
         $host = $uri->getHost();
         if ($host !== '') {
             foreach ($headers as $name => $value) {
-                if (\strtolower($name) === 'host' && $value !== array()) {
+                if (\strtolower($name) === 'host' && $value !== []) {
                     $host = '';
                     break;
                 }
@@ -61,7 +61,7 @@ abstract class AbstractRequest extends AbstractMessage implements RequestInterfa
                     $host .= ':' . $port;
                 }
 
-                $headers = array('Host' => $host) + $headers;
+                $headers = ['Host' => $host] + $headers;
             }
         }
 

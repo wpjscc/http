@@ -15,10 +15,10 @@ $client = new Browser();
 
 $in = new ReadableResourceStream(STDIN);
 
-$url = isset($argv[1]) ? $argv[1] : 'https://httpbingo.org/post';
+$url = $argv[1] ?? 'https://httpbingo.org/post';
 echo 'Sending STDIN as POST to ' . $url . '…' . PHP_EOL;
 
-$client->post($url, array('Content-Type' => 'text/plain'), $in)->then(function (ResponseInterface $response) {
+$client->post($url, ['Content-Type' => 'text/plain'], $in)->then(function (ResponseInterface $response) {
     echo (string) $response->getBody();
 }, function (Exception $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;

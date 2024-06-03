@@ -10,12 +10,17 @@ use React\Http\Message\Response;
 use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Http\Middleware\RequestBodyBufferMiddleware;
 use React\Http\Middleware\StreamingRequestMiddleware;
+use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use React\Socket\SocketServer;
-use React\Promise;
-use React\Promise\Stream;
 use React\Stream\ThroughStream;
+use function React\Async\await;
+use function React\Promise\all;
+use function React\Promise\Stream\buffer;
+use function React\Promise\Stream\first;
+use function React\Promise\Timer\sleep;
+use function React\Promise\Timer\timeout;
 
 class FunctionalHttpServerTest extends TestCase
 {
@@ -24,7 +29,7 @@ class FunctionalHttpServerTest extends TestCase
         $connector = new Connector();
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -33,13 +38,13 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: " . noScheme($conn->getRemoteAddress()) . "\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -60,12 +65,12 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: " . noScheme($conn->getRemoteAddress()) . "\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 404 Not Found", $response);
+        $this->assertStringContainsString("HTTP/1.0 404 Not Found", $response);
 
         $socket->close();
     }
@@ -75,7 +80,7 @@ class FunctionalHttpServerTest extends TestCase
         $connector = new Connector();
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -84,13 +89,13 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -100,7 +105,7 @@ class FunctionalHttpServerTest extends TestCase
         $connector = new Connector();
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -109,83 +114,75 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: localhost:1000\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://localhost:1000/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://localhost:1000/', $response);
 
         $socket->close();
     }
 
     public function testSecureHttpsOnRandomPort()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
-        $connector = new Connector(array(
-            'tls' => array('verify_peer' => false)
-        ));
+        $connector = new Connector([
+            'tls' => [
+                'verify_peer' => false
+            ]
+        ]);
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
-        $socket = new SocketServer('tls://127.0.0.1:0', array('tls' => array(
+        $socket = new SocketServer('tls://127.0.0.1:0', ['tls' => [
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
-        )));
+        ]]);
         $http->listen($socket);
 
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: " . noScheme($conn->getRemoteAddress()) . "\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
 
     public function testSecureHttpsReturnsData()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         $http = new HttpServer(function (RequestInterface $request) {
             return new Response(
                 200,
-                array(),
+                [],
                 str_repeat('.', 33000)
             );
         });
 
-        $socket = new SocketServer('tls://127.0.0.1:0', array('tls' => array(
-            'local_cert' => __DIR__ . '/../examples/localhost.pem'
-        )));
+        $socket = new SocketServer('tls://127.0.0.1:0', ['tls' => ['local_cert' => __DIR__ . '/../examples/localhost.pem']]);
         $http->listen($socket);
 
-        $connector = new Connector(array(
-            'tls' => array('verify_peer' => false)
-        ));
+        $connector = new Connector(['tls' => [
+            'verify_peer' => false
+        ]]);
 
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: " . noScheme($conn->getRemoteAddress()) . "\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString("\r\nContent-Length: 33000\r\n", $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString("\r\nContent-Length: 33000\r\n", $response);
         $this->assertStringEndsWith("\r\n". str_repeat('.', 33000), $response);
 
         $socket->close();
@@ -193,33 +190,29 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testSecureHttpsOnRandomPortWithoutHostHeaderUsesSocketUri()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
-        $connector = new Connector(array(
-            'tls' => array('verify_peer' => false)
-        ));
+        $connector = new Connector([
+            'tls' => ['verify_peer' => false]
+        ]);
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
-        $socket = new SocketServer('tls://127.0.0.1:0', array('tls' => array(
+        $socket = new SocketServer('tls://127.0.0.1:0', ['tls' => [
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
-        )));
+        ]]);
         $http->listen($socket);
 
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://' . noScheme($socket->getAddress()) . '/', $response);
 
         $socket->close();
     }
@@ -234,7 +227,7 @@ class FunctionalHttpServerTest extends TestCase
         $connector = new Connector();
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $http->listen($socket);
@@ -242,13 +235,13 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://127.0.0.1/', $response);
 
         $socket->close();
     }
@@ -263,7 +256,7 @@ class FunctionalHttpServerTest extends TestCase
         $connector = new Connector();
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $http->listen($socket);
@@ -271,37 +264,33 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://127.0.0.1/', $response);
 
         $socket->close();
     }
 
     public function testSecureHttpsOnStandardPortReturnsUriWithNoPort()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         try {
-            $socket = new SocketServer('tls://127.0.0.1:443', array('tls' => array(
+            $socket = new SocketServer('tls://127.0.0.1:443', ['tls' => [
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
-            )));
+            ]]);
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Listening on port 443 failed (root and unused?)');
         }
 
-        $connector = new Connector(array(
-            'tls' => array('verify_peer' => false)
-        ));
+        $connector = new Connector([
+            'tls' => ['verify_peer' => false]
+        ]);
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $http->listen($socket);
@@ -309,37 +298,33 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://127.0.0.1/', $response);
 
         $socket->close();
     }
 
     public function testSecureHttpsOnStandardPortWithoutHostHeaderUsesSocketUri()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         try {
-            $socket = new SocketServer('tls://127.0.0.1:443', array('tls' => array(
+            $socket = new SocketServer('tls://127.0.0.1:443', ['tls' => [
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
-            )));
+            ]]);
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Listening on port 443 failed (root and unused?)');
         }
 
-        $connector = new Connector(array(
-            'tls' => array('verify_peer' => false)
-        ));
+        $connector = new Connector([
+            'tls' => ['verify_peer' => false]
+        ]);
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $http->listen($socket);
@@ -347,13 +332,13 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://127.0.0.1/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://127.0.0.1/', $response);
 
         $socket->close();
     }
@@ -368,7 +353,7 @@ class FunctionalHttpServerTest extends TestCase
         $connector = new Connector();
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri());
+            return new Response(200, [], (string)$request->getUri());
         });
 
         $http->listen($socket);
@@ -376,37 +361,33 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: " . noScheme($conn->getRemoteAddress()) . "\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('http://127.0.0.1:443/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('http://127.0.0.1:443/', $response);
 
         $socket->close();
     }
 
     public function testSecureHttpsOnHttpStandardPortReturnsUriWithPort()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
-        }
-
         try {
-            $socket = new SocketServer('tls://127.0.0.1:80', array('tls' => array(
+            $socket = new SocketServer('tls://127.0.0.1:80', ['tls' => [
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
-            )));
+            ]]);
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Listening on port 80 failed (root and unused?)');
         }
 
-        $connector = new Connector(array(
-            'tls' => array('verify_peer' => false)
-        ));
+        $connector = new Connector([
+            'tls' => ['verify_peer' => false]
+        ]);
 
         $http = new HttpServer(function (RequestInterface $request) {
-            return new Response(200, array(), (string)$request->getUri() . 'x' . $request->getHeaderLine('Host'));
+            return new Response(200, [], (string)$request->getUri() . 'x' . $request->getHeaderLine('Host'));
         });
 
         $http->listen($socket);
@@ -414,13 +395,13 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\nHost: " . noScheme($conn->getRemoteAddress()) . "\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
-        $this->assertContainsString("HTTP/1.0 200 OK", $response);
-        $this->assertContainsString('https://127.0.0.1:80/', $response);
+        $this->assertStringContainsString("HTTP/1.0 200 OK", $response);
+        $this->assertStringContainsString('https://127.0.0.1:80/', $response);
 
         $socket->close();
     }
@@ -433,7 +414,7 @@ class FunctionalHttpServerTest extends TestCase
         $stream->close();
 
         $http = new HttpServer(function (RequestInterface $request) use ($stream) {
-            return new Response(200, array(), $stream);
+            return new Response(200, [], $stream);
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -442,10 +423,10 @@ class FunctionalHttpServerTest extends TestCase
         $result = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
             $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
         $this->assertStringStartsWith("HTTP/1.0 200 OK", $response);
         $this->assertStringEndsWith("\r\n\r\n", $response);
@@ -476,7 +457,7 @@ class FunctionalHttpServerTest extends TestCase
             });
         });
 
-        \React\Async\await(\React\Promise\Timer\sleep(0.1));
+        await(sleep(0.1));
 
         $socket->close();
     }
@@ -490,7 +471,7 @@ class FunctionalHttpServerTest extends TestCase
         $http = new HttpServer(
             new StreamingRequestMiddleware(),
             function (RequestInterface $request) use ($stream) {
-                return new Response(200, array(), $stream);
+                return new Response(200, [], $stream);
             }
         );
 
@@ -506,7 +487,7 @@ class FunctionalHttpServerTest extends TestCase
         });
 
         // stream will be closed within 0.1s
-        $ret = \React\Async\await(\React\Promise\Timer\timeout(Stream\first($stream, 'close'), 0.1));
+        $ret = await(timeout(first($stream, 'close'), 0.1));
 
         $socket->close();
 
@@ -520,7 +501,7 @@ class FunctionalHttpServerTest extends TestCase
         $stream = new ThroughStream();
 
         $http = new HttpServer(function (RequestInterface $request) use ($stream) {
-            return new Response(200, array(), $stream);
+            return new Response(200, [], $stream);
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -535,7 +516,7 @@ class FunctionalHttpServerTest extends TestCase
         });
 
         // await response stream to be closed
-        $ret = \React\Async\await(\React\Promise\Timer\timeout(Stream\first($stream, 'close'), 1.0));
+        $ret = await(timeout(first($stream, 'close'), 1.0));
 
         $socket->close();
 
@@ -553,7 +534,7 @@ class FunctionalHttpServerTest extends TestCase
                 $stream->end();
             });
 
-            return new Response(101, array('Upgrade' => 'echo'), $stream);
+            return new Response(101, ['Upgrade' => 'echo'], $stream);
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -567,10 +548,10 @@ class FunctionalHttpServerTest extends TestCase
                 $conn->write('world');
             });
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
         $this->assertStringStartsWith("HTTP/1.1 101 Switching Protocols\r\n", $response);
         $this->assertStringEndsWith("\r\n\r\nhelloworld", $response);
@@ -589,7 +570,7 @@ class FunctionalHttpServerTest extends TestCase
                 $stream->end();
             });
 
-            return new Response(101, array('Upgrade' => 'echo'), $stream);
+            return new Response(101, ['Upgrade' => 'echo'], $stream);
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -604,10 +585,10 @@ class FunctionalHttpServerTest extends TestCase
                 $conn->write('world');
             });
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
         $this->assertStringStartsWith("HTTP/1.1 101 Switching Protocols\r\n", $response);
         $this->assertStringEndsWith("\r\n\r\nhelloworld", $response);
@@ -626,7 +607,7 @@ class FunctionalHttpServerTest extends TestCase
                 $stream->end();
             });
 
-            return new Response(200, array(), $stream);
+            return new Response(200, [], $stream);
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -640,10 +621,10 @@ class FunctionalHttpServerTest extends TestCase
                 $conn->write('world');
             });
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
         $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $response);
         $this->assertStringEndsWith("\r\n\r\nhelloworld", $response);
@@ -662,9 +643,9 @@ class FunctionalHttpServerTest extends TestCase
                 $stream->end();
             });
 
-            return new Promise\Promise(function ($resolve) use ($stream) {
+            return new Promise(function ($resolve) use ($stream) {
                 Loop::addTimer(0.001, function () use ($resolve, $stream) {
-                    $resolve(new Response(200, array(), $stream));
+                    $resolve(new Response(200, [], $stream));
                 });
             });
         });
@@ -680,10 +661,10 @@ class FunctionalHttpServerTest extends TestCase
                 $conn->write('world');
             });
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
         $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $response);
         $this->assertStringEndsWith("\r\n\r\nhelloworld", $response);
@@ -699,7 +680,7 @@ class FunctionalHttpServerTest extends TestCase
             $stream = new ThroughStream();
             $stream->close();
 
-            return new Response(200, array(), $stream);
+            return new Response(200, [], $stream);
         });
 
         $socket = new SocketServer('127.0.0.1:0');
@@ -713,10 +694,10 @@ class FunctionalHttpServerTest extends TestCase
                 $conn->write('world');
             });
 
-            return Stream\buffer($conn);
+            return buffer($conn);
         });
 
-        $response = \React\Async\await(\React\Promise\Timer\timeout($result, 1.0));
+        $response = await(timeout($result, 1.0));
 
         $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $response);
         $this->assertStringEndsWith("\r\n\r\n", $response);
@@ -726,31 +707,27 @@ class FunctionalHttpServerTest extends TestCase
 
     public function testLimitConcurrentRequestsMiddlewareRequestStreamPausing()
     {
-        if (defined('HHVM_VERSION') && !interface_exists('React\Promise\PromisorInterface')) {
-            $this->markTestSkipped('Not supported on legacy HHVM with Promise v3');
-        }
-
         $connector = new Connector();
 
         $http = new HttpServer(
             new LimitConcurrentRequestsMiddleware(5),
             new RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB
             function (ServerRequestInterface $request, $next) {
-                return new Promise\Promise(function ($resolve) use ($request, $next) {
+                return new Promise(function ($resolve) use ($request, $next) {
                     Loop::addTimer(0.1, function () use ($request, $resolve, $next) {
                         $resolve($next($request));
                     });
                 });
             },
             function (ServerRequestInterface $request) {
-                return new Response(200, array(), (string)strlen((string)$request->getBody()));
+                return new Response(200, [], (string)strlen((string)$request->getBody()));
             }
         );
 
         $socket = new SocketServer('127.0.0.1:0');
         $http->listen($socket);
 
-        $result = array();
+        $result = [];
         for ($i = 0; $i < 6; $i++) {
             $result[] = $connector->connect($socket->getAddress())->then(function (ConnectionInterface $conn) {
                 $conn->write(
@@ -759,14 +736,14 @@ class FunctionalHttpServerTest extends TestCase
                     "\r\n\r\n"
                 );
 
-                return Stream\buffer($conn);
+                return buffer($conn);
             });
         }
 
-        $responses = \React\Async\await(\React\Promise\Timer\timeout(Promise\all($result), 1.0));
+        $responses = await(timeout(all($result), 1.0));
 
         foreach ($responses as $response) {
-            $this->assertContainsString("HTTP/1.0 200 OK", $response, $response);
+            $this->assertStringContainsString("HTTP/1.0 200 OK", $response, $response);
             $this->assertTrue(substr($response, -4) == 1024, $response);
         }
 

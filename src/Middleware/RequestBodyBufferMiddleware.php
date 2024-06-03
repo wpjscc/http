@@ -76,11 +76,8 @@ final class RequestBodyBufferMiddleware
                 try {
                     // resolve with result of next handler
                     $resolve($next($request->withBody(new BufferedBody($buffer))));
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $reject($e);
-                } catch (\Throwable $e) { // @codeCoverageIgnoreStart
-                    // reject Errors just like Exceptions (PHP 7+)
-                    $reject($e); // @codeCoverageIgnoreEnd
                 }
             });
 

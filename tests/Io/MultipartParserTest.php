@@ -2,6 +2,7 @@
 
 namespace React\Tests\Http\Io\Middleware;
 
+use Psr\Http\Message\UploadedFileInterface;
 use React\Http\Io\MultipartParser;
 use React\Http\Message\ServerRequest;
 use React\Tests\Http\TestCase;
@@ -22,9 +23,9 @@ final class MultipartParserTest extends TestCase
         $data .= "second\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data',
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -47,21 +48,21 @@ final class MultipartParserTest extends TestCase
         $data .= "second\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     'one' => 'single',
                     'two' => 'second',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -80,21 +81,21 @@ final class MultipartParserTest extends TestCase
         $data .= "second\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary="' . $boundary . '"',
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     'one' => 'single',
                     'two' => 'second',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -113,21 +114,21 @@ final class MultipartParserTest extends TestCase
         $data .= "second\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary="' . $boundary . '"',
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     'one' => 'single',
                     'two' => 'second',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -146,18 +147,18 @@ final class MultipartParserTest extends TestCase
         $data .= "2\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
+            [
                 'users' => '2'
-            ),
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -176,20 +177,20 @@ final class MultipartParserTest extends TestCase
         $data .= "2\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     'two' => '2',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -208,20 +209,20 @@ final class MultipartParserTest extends TestCase
         $data .= "2\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     '2',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -240,25 +241,25 @@ final class MultipartParserTest extends TestCase
         $data .= "2\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'users' => array(
-                    array(
+            [
+                'users' => [
+                    [
                         '1'
-                    ),
-                    array(
+                    ],
+                    [
                         '2'
-                    )
-                ),
-            ),
+                    ]
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -273,18 +274,18 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
+            [
                 'key' => ''
-            ),
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -299,18 +300,18 @@ final class MultipartParserTest extends TestCase
         $data .= "value\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
+            [
                 '' => 'value'
-            ),
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -325,22 +326,22 @@ final class MultipartParserTest extends TestCase
         $data .= "value\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'a' => array(
-                    'b' => array(
+            [
+                'a' => [
+                    'b' => [
                         'c' => 'value'
-                    )
-                )
-            ),
+                    ]
+                ]
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -355,22 +356,22 @@ final class MultipartParserTest extends TestCase
         $data .= "value\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
-                'a' => array(
-                    array(
+            [
+                'a' => [
+                    [
                         'value'
-                    )
-                )
-            ),
+                    ]
+                ]
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -436,25 +437,25 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertSame(
-            array(
+            [
                 'MAX_FILE_SIZE' => '12000',
-                'users' => array(
+                'users' => [
                     'one' => 'single',
                     'two' => 'second',
                     0 => 'first in array',
                     1 => 'second in array',
-                ),
+                ],
                 'user' => 'single',
                 'user2' => 'second',
-            ),
+            ],
             $parsedRequest->getParsedBody()
         );
 
@@ -491,18 +492,18 @@ final class MultipartParserTest extends TestCase
         $data .= "value\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
 
         $this->assertEmpty($parsedRequest->getUploadedFiles());
         $this->assertSame(
-            array(
+            [
                 'key' => 'value'
-            ),
+            ],
             $parsedRequest->getParsedBody()
         );
     }
@@ -517,9 +518,9 @@ final class MultipartParserTest extends TestCase
         $data .= "value";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -537,9 +538,9 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -555,9 +556,9 @@ final class MultipartParserTest extends TestCase
         $data  = "--$boundary\r\n";
         $data .= "Content-Disposition: form-data; name=\"key\"\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -576,9 +577,9 @@ final class MultipartParserTest extends TestCase
         $data .= "hello\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -597,9 +598,9 @@ final class MultipartParserTest extends TestCase
         $data .= "value\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -618,9 +619,9 @@ final class MultipartParserTest extends TestCase
         $data .= "value\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -638,9 +639,9 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "value\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -662,9 +663,9 @@ final class MultipartParserTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -673,7 +674,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -697,9 +698,9 @@ final class MultipartParserTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -708,7 +709,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -731,9 +732,9 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -742,7 +743,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -765,9 +766,9 @@ final class MultipartParserTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser(4);
         $parsedRequest = $parser->parse($request);
@@ -776,7 +777,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -798,9 +799,9 @@ final class MultipartParserTest extends TestCase
         $data .= str_repeat('world', 1024) . "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser('1K');
         $parsedRequest = $parser->parse($request);
@@ -809,7 +810,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -831,9 +832,9 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -842,7 +843,7 @@ final class MultipartParserTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertTrue(isset($files['file']));
-        $this->assertInstanceOf('Psr\Http\Message\UploadedFileInterface', $files['file']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['file']);
 
         /* @var $file \Psr\Http\Message\UploadedFileInterface */
         $file = $files['file'];
@@ -869,9 +870,9 @@ final class MultipartParserTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser(100, 1);
         $parsedRequest = $parser->parse($request);
@@ -910,9 +911,9 @@ final class MultipartParserTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser(100, 1);
         $parsedRequest = $parser->parse($request);
@@ -953,9 +954,9 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -1008,9 +1009,9 @@ final class MultipartParserTest extends TestCase
         $data .= "\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
         $parsedRequest = $parser->parse($request);
@@ -1040,13 +1041,13 @@ final class MultipartParserTest extends TestCase
         $data .= str_repeat($chunk, $chunkCount);
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
+        $request = new ServerRequest('POST', 'http://example.com/', [
             'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        ], $data, 1.1);
 
         $parser = new MultipartParser();
 
-        $reflectecClass = new \ReflectionClass('\React\Http\Io\MultipartParser');
+        $reflectecClass = new \ReflectionClass(MultipartParser::class);
         $requestProperty = $reflectecClass->getProperty('request');
         $requestProperty->setAccessible(true);
         $cursorProperty = $reflectecClass->getProperty('cursor');

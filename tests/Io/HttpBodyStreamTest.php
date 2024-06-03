@@ -3,7 +3,9 @@
 namespace React\Tests\Http\Io;
 
 use React\Http\Io\HttpBodyStream;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
+use React\Stream\WritableStreamInterface;
 use React\Tests\Http\TestCase;
 
 class HttpBodyStreamTest extends TestCase
@@ -22,13 +24,13 @@ class HttpBodyStreamTest extends TestCase
 
     public function testDataEmit()
     {
-        $this->bodyStream->on('data', $this->expectCallableOnce(array("hello")));
-        $this->input->emit('data', array("hello"));
+        $this->bodyStream->on('data', $this->expectCallableOnce(["hello"]));
+        $this->input->emit('data', ["hello"]);
     }
 
     public function testPauseStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('pause');
 
         $bodyStream = new HttpBodyStream($input, null);
@@ -37,7 +39,7 @@ class HttpBodyStreamTest extends TestCase
 
     public function testResumeStream()
     {
-        $input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $input = $this->createMock(ReadableStreamInterface::class);
         $input->expects($this->once())->method('resume');
 
         $bodyStream = new HttpBodyStream($input, null);
@@ -46,7 +48,7 @@ class HttpBodyStreamTest extends TestCase
 
     public function testPipeStream()
     {
-        $dest = $this->getMockBuilder('React\Stream\WritableStreamInterface')->getMock();
+        $dest = $this->createMock(WritableStreamInterface::class);
 
         $ret = $this->bodyStream->pipe($dest);
 
@@ -58,7 +60,7 @@ class HttpBodyStreamTest extends TestCase
         $this->bodyStream->on('close', $this->expectCallableOnce());
 
         $this->input->close();
-        $this->input->emit('end', array());
+        $this->input->emit('end', []);
 
         $this->assertFalse($this->bodyStream->isReadable());
     }
@@ -67,11 +69,11 @@ class HttpBodyStreamTest extends TestCase
     {
         $bodyStream = new HttpBodyStream($this->input, null);
         $bodyStream->on('close', $this->expectCallableOnce());
-        $this->bodyStream->on('data', $this->expectCallableOnce(array("hello")));
+        $this->bodyStream->on('data', $this->expectCallableOnce(["hello"]));
 
-        $this->input->emit('data', array("hello"));
+        $this->input->emit('data', ["hello"]);
         $bodyStream->close();
-        $this->input->emit('data', array("world"));
+        $this->input->emit('data', ["world"]);
     }
 
     public function testHandleError()
@@ -79,7 +81,7 @@ class HttpBodyStreamTest extends TestCase
         $this->bodyStream->on('error', $this->expectCallableOnce());
         $this->bodyStream->on('close', $this->expectCallableOnce());
 
-        $this->input->emit('error', array(new \RuntimeException()));
+        $this->input->emit('error', [new \RuntimeException()]);
 
         $this->assertFalse($this->bodyStream->isReadable());
     }
@@ -107,13 +109,13 @@ class HttpBodyStreamTest extends TestCase
 
     public function testTell()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->tell();
     }
 
     public function testEof()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->eof();
     }
 
@@ -124,13 +126,13 @@ class HttpBodyStreamTest extends TestCase
 
     public function testWrite()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->write('');
     }
 
     public function testRead()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->read('');
     }
 
@@ -151,13 +153,13 @@ class HttpBodyStreamTest extends TestCase
 
     public function testSeek()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->seek('');
     }
 
     public function testRewind()
     {
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException(\BadMethodCallException::class);
         $this->bodyStream->rewind();
     }
 

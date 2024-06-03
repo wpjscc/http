@@ -15,9 +15,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             'hello=world'
         );
 
@@ -30,7 +30,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array('hello' => 'world'),
+            ['hello' => 'world'],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame('hello=world', (string)$parsedRequest->getBody());
@@ -42,9 +42,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'CONTENT-TYPE' => 'APPLICATION/X-WWW-Form-URLEncoded',
-            ),
+            [
+                'CONTENT-TYPE' => 'APPLICATION/X-WWW-Form-URLEncoded'
+            ],
             'Hello=World'
         );
 
@@ -57,7 +57,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array('Hello' => 'World'),
+            ['Hello' => 'World'],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame('Hello=World', (string)$parsedRequest->getBody());
@@ -69,9 +69,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             'foo=bar&baz[]=cheese&bar[]=beer&bar[]=wine&market[fish]=salmon&market[meat][]=beef&market[meat][]=chicken&market[]=bazaar'
         );
 
@@ -84,24 +84,24 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array(
+            [
                 'foo' => 'bar',
-                'baz' => array(
+                'baz' => [
                     'cheese',
-                ),
-                'bar' => array(
+                ],
+                'bar' => [
                     'beer',
                     'wine',
-                ),
-                'market' => array(
+                ],
+                'market' => [
                     'fish' => 'salmon',
-                    'meat' => array(
+                    'meat' => [
                         'beef',
                         'chicken',
-                    ),
+                    ],
                     0 => 'bazaar',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame('foo=bar&baz[]=cheese&bar[]=beer&bar[]=wine&market[fish]=salmon&market[meat][]=beef&market[meat][]=chicken&market[]=bazaar', (string)$parsedRequest->getBody());
@@ -109,22 +109,15 @@ final class RequestBodyParserMiddlewareTest extends TestCase
 
     public function testFormUrlencodedIgnoresBodyWithExcessiveNesting()
     {
-        // supported in all Zend PHP versions and HHVM
-        // ini setting does exist everywhere but HHVM: https://3v4l.org/hXLiK
-        // HHVM limits to 64 and returns an empty array structure: https://3v4l.org/j3DK2
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM (limited to depth 64, but keeps empty array structure)');
-        }
-
         $allowed = (int)ini_get('max_input_nesting_level');
 
         $middleware = new RequestBodyParserMiddleware();
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             'hello' . str_repeat('[]', $allowed + 1) . '=world'
         );
 
@@ -137,28 +130,22 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array(),
+            [],
             $parsedRequest->getParsedBody()
         );
     }
 
     public function testFormUrlencodedTruncatesBodyWithExcessiveLength()
     {
-        // supported as of PHP 5.3.11, no HHVM support: https://3v4l.org/PiqnQ
-        // ini setting already exists in PHP 5.3.9: https://3v4l.org/VF6oV
-        if (defined('HHVM_VERSION') || PHP_VERSION_ID < 50311) {
-            $this->markTestSkipped('Not supported on HHVM and PHP < 5.3.11 (unlimited length)');
-        }
-
         $allowed = (int)ini_get('max_input_vars');
 
         $middleware = new RequestBodyParserMiddleware();
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
+            [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
             str_repeat('a[]=b&', $allowed + 1)
         );
 
@@ -183,9 +170,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $request = new ServerRequest(
             'POST',
             'https://example.com/',
-            array(
-                'Content-Type' => 'application/json',
-            ),
+            [
+                'Content-Type' => 'application/json'
+            ],
             '{"hello":"world"}'
         );
 
@@ -217,9 +204,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $data .= "second\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(
@@ -230,12 +217,12 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            array(
-                'users' => array(
+            [
+                'users' => [
                     'one' => 'single',
                     'two' => 'second',
-                ),
-            ),
+                ],
+            ],
             $parsedRequest->getParsedBody()
         );
         $this->assertSame($data, (string)$parsedRequest->getBody());
@@ -243,13 +230,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
 
     public function testMultipartFormDataIgnoresFieldWithExcessiveNesting()
     {
-        // supported in all Zend PHP versions and HHVM
-        // ini setting does exist everywhere but HHVM: https://3v4l.org/hXLiK
-        // HHVM limits to 64 and otherwise returns an empty array structure
-        $allowed = (int)ini_get('max_input_nesting_level');
-        if ($allowed === 0) {
-            $allowed = 64;
-        }
+        $allowed = (int) ini_get('max_input_nesting_level');
 
         $middleware = new RequestBodyParserMiddleware();
 
@@ -261,9 +242,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         $data .= "world\r\n";
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(
@@ -278,12 +259,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
 
     public function testMultipartFormDataTruncatesBodyWithExcessiveLength()
     {
-        // ini setting exists in PHP 5.3.9, not in HHVM: https://3v4l.org/VF6oV
-        // otherwise default to 1000 as implemented within
-        $allowed = (int)ini_get('max_input_vars');
-        if ($allowed === 0) {
-            $allowed = 1000;
-        }
+        $allowed = (int) ini_get('max_input_vars');
 
         $middleware = new RequestBodyParserMiddleware();
 
@@ -298,9 +274,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         }
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(
@@ -319,12 +295,7 @@ final class RequestBodyParserMiddlewareTest extends TestCase
 
     public function testMultipartFormDataTruncatesExcessiveNumberOfEmptyFileUploads()
     {
-        // ini setting exists in PHP 5.3.9, not in HHVM: https://3v4l.org/VF6oV
-        // otherwise default to 1000 as implemented within
-        $allowed = (int)ini_get('max_input_vars');
-        if ($allowed === 0) {
-            $allowed = 1000;
-        }
+        $allowed = (int) ini_get('max_input_vars');
 
         $middleware = new RequestBodyParserMiddleware();
 
@@ -339,9 +310,9 @@ final class RequestBodyParserMiddlewareTest extends TestCase
         }
         $data .= "--$boundary--\r\n";
 
-        $request = new ServerRequest('POST', 'http://example.com/', array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
-        ), $data, 1.1);
+        $request = new ServerRequest('POST', 'http://example.com/', [
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ], $data, 1.1);
 
         /** @var ServerRequestInterface $parsedRequest */
         $parsedRequest = $middleware(

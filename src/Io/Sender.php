@@ -40,7 +40,7 @@ class Sender
      * settings. You can use this method manually like this:
      *
      * ```php
-     * $connector = new \React\Socket\Connector(array(), $loop);
+     * $connector = new \React\Socket\Connector([], $loop);
      * $sender = \React\Http\Io\Sender::createFromLoop($loop, $connector);
      * ```
      *
@@ -51,7 +51,7 @@ class Sender
     public static function createFromLoop(LoopInterface $loop, ConnectorInterface $connector = null)
     {
         if ($connector === null) {
-            $connector = new Connector(array(), $loop);
+            $connector = new Connector([], $loop);
         }
 
         return new self(new HttpClient(new ClientConnectionManager($connector, $loop)));
@@ -79,7 +79,7 @@ class Sender
     public function send(RequestInterface $request)
     {
         // support HTTP/1.1 and HTTP/1.0 only, ensured by `Browser` already
-        assert(\in_array($request->getProtocolVersion(), array('1.0', '1.1'), true));
+        assert(\in_array($request->getProtocolVersion(), ['1.0', '1.1'], true));
 
         $body = $request->getBody();
         $size = $body->getSize();
@@ -87,7 +87,7 @@ class Sender
         if ($size !== null && $size !== 0) {
             // automatically assign a "Content-Length" request header if the body size is known and non-empty
             $request = $request->withHeader('Content-Length', (string)$size);
-        } elseif ($size === 0 && \in_array($request->getMethod(), array('POST', 'PUT', 'PATCH'))) {
+        } elseif ($size === 0 && \in_array($request->getMethod(), ['POST', 'PUT', 'PATCH'])) {
             // only assign a "Content-Length: 0" request header if the body is expected for certain methods
             $request = $request->withHeader('Content-Length', '0');
         } elseif ($body instanceof ReadableStreamInterface && $size !== 0 && $body->isReadable() && !$request->hasHeader('Content-Length')) {

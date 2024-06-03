@@ -28,7 +28,7 @@ class RequestHeaderParser extends EventEmitter
     private $clock;
 
     /** @var array<string|int,array<string,string>> */
-    private $connectionParams = array();
+    private $connectionParams = [];
 
     public function __construct(Clock $clock)
     {
@@ -38,22 +38,20 @@ class RequestHeaderParser extends EventEmitter
     public function handle(ConnectionInterface $conn)
     {
         $buffer = '';
-        $maxSize = $this->maxSize;
-        $that = $this;
-        $conn->on('data', $fn = function ($data) use (&$buffer, &$fn, $conn, $maxSize, $that) {
+        $conn->on('data', $fn = function ($data) use (&$buffer, &$fn, $conn) {
             // append chunk of data to buffer and look for end of request headers
             $buffer .= $data;
             $endOfHeader = \strpos($buffer, "\r\n\r\n");
 
             // reject request if buffer size is exceeded
-            if ($endOfHeader > $maxSize || ($endOfHeader === false && isset($buffer[$maxSize]))) {
+            if ($endOfHeader > $this->maxSize || ($endOfHeader === false && isset($buffer[$this->maxSize]))) {
                 $conn->removeListener('data', $fn);
                 $fn = null;
 
-                $that->emit('error', array(
-                    new \OverflowException("Maximum header size of {$maxSize} exceeded.", Response::STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE),
+                $this->emit('error', [
+                    new \OverflowException("Maximum header size of {$this->maxSize} exceeded.", Response::STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE),
                     $conn
-                ));
+                ]);
                 return;
             }
 
@@ -67,16 +65,16 @@ class RequestHeaderParser extends EventEmitter
             $fn = null;
 
             try {
-                $request = $that->parseRequest(
+                $request = $this->parseRequest(
                     (string)\substr($buffer, 0, $endOfHeader + 2),
                     $conn
                 );
             } catch (Exception $exception) {
                 $buffer = '';
-                $that->emit('error', array(
+                $this->emit('error', [
                     $exception,
                     $conn
-                ));
+                ]);
                 return;
             }
 
@@ -105,10 +103,10 @@ class RequestHeaderParser extends EventEmitter
 
             $bodyBuffer = isset($buffer[$endOfHeader + 4]) ? \substr($buffer, $endOfHeader + 4) : '';
             $buffer = '';
-            $that->emit('headers', array($request, $conn));
+            $this->emit('headers', [$request, $conn]);
 
             if ($bodyBuffer !== '') {
-                $conn->emit('data', array($bodyBuffer));
+                $conn->emit('data', [$bodyBuffer]);
             }
 
             // happy path: request body is known to be empty => immediately end stream
@@ -134,11 +132,11 @@ class RequestHeaderParser extends EventEmitter
             $serverParams = $this->connectionParams[$cid];
         } else {
             // assign new server params for new connection
-            $serverParams = array();
+            $serverParams = [];
 
             // scheme is `http` unless TLS is used
             $localSocketUri = $connection->getLocalAddress();
-            $localParts = $localSocketUri === null ? array() : \parse_url($localSocketUri);
+            $localParts = $localSocketUri === null ? [] : \parse_url($localSocketUri);
             if (isset($localParts['scheme']) && $localParts['scheme'] === 'tls') {
                 $serverParams['HTTPS'] = 'on';
             }
@@ -162,10 +160,9 @@ class RequestHeaderParser extends EventEmitter
 
             // remember server params for all requests from this connection, reset on connection close
             $this->connectionParams[$cid] = $serverParams;
-            $params =& $this->connectionParams;
-            $connection->on('close', function () use (&$params, $cid) {
-                assert(\is_array($params));
-                unset($params[$cid]);
+            $connection->on('close', function () use ($cid) {
+                assert(\is_array($this->connectionParams[$cid]));
+                unset($this->connectionParams[$cid]);
             });
         }
 

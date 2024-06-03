@@ -55,7 +55,7 @@ class ChunkRepeater extends EventEmitter implements ReadableStreamInterface
         $this->paused = false;
         while ($this->position < $this->count && !$this->paused) {
             ++$this->position;
-            $this->emit('data', array($this->chunk));
+            $this->emit('data', [$this->chunk]);
         }
 
         // end once the last chunk has been written
@@ -65,7 +65,7 @@ class ChunkRepeater extends EventEmitter implements ReadableStreamInterface
         }
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = array())
+    public function pipe(WritableStreamInterface $dest, array $options = [])
     {
         return Util::pipe($this, $dest, $options);
     }
@@ -95,8 +95,8 @@ class ChunkRepeater extends EventEmitter implements ReadableStreamInterface
 
 $client = new Browser();
 
-$url = isset($argv[1]) ? $argv[1] : 'http://httpbin.org/post';
-$n = isset($argv[2]) ? $argv[2] : 10;
+$url = $argv[1] ?? 'http://httpbin.org/post';
+$n = $argv[2] ?? 10;
 $source = new ChunkRepeater(str_repeat('x', 1000000), $n);
 Loop::futureTick(function () use ($source) {
     $source->resume();
@@ -109,7 +109,7 @@ $report = Loop::addPeriodicTimer(0.05, function () use ($source, $start) {
     printf("\r%d bytes in %0.3fs...", $source->getPosition(), microtime(true) - $start);
 });
 
-$client->post($url, array('Content-Length' => $n * 1000000), $source)->then(function (ResponseInterface $response) use ($source, $report, $start) {
+$client->post($url, ['Content-Length' => $n * 1000000], $source)->then(function (ResponseInterface $response) use ($source, $report, $start) {
     $now = microtime(true);
     Loop::cancelTimer($report);
 
