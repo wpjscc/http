@@ -77,7 +77,7 @@ final class RequestBodyBufferMiddleware
             $body->on('close', $closer = function () use (&$buffer, $request, $resolve, $reject, $next, &$response) {
                 try {
                     // resolve with result of next handler
-                    $resolve($next($response = $request->withBody(new BufferedBody($buffer))));
+                    $resolve($response = $next($request->withBody(new BufferedBody($buffer))));
                 } catch (\Throwable $e) {
                     $reject($e);
                 }
