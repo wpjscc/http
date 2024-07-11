@@ -8,6 +8,7 @@ use React\Http\Io\BufferedBody;
 use React\Http\Io\IniUtil;
 use React\Promise\Promise;
 use React\Stream\ReadableStreamInterface;
+use React\Promise\PromiseInterface;
 
 final class RequestBodyBufferMiddleware
 {
@@ -52,8 +53,9 @@ final class RequestBodyBufferMiddleware
 
         /** @var ?\Closure $closer */
         $closer = null;
-
-        return new Promise(function ($resolve, $reject) use ($body, &$closer, $sizeLimit, $request, $next) {
+        $response = null;
+        
+        return new Promise(function ($resolve, $reject) use ($body, &$closer, $sizeLimit, $request, $next, &$response) {
             // buffer request body data in memory, discard but keep buffering if limit is reached
             $buffer = '';
             $bufferer = null;
@@ -72,10 +74,10 @@ final class RequestBodyBufferMiddleware
             });
 
             // call $next with current buffer and resolve or reject with its results
-            $body->on('close', $closer = function () use (&$buffer, $request, $resolve, $reject, $next) {
+            $body->on('close', $closer = function () use (&$buffer, $request, $resolve, $reject, $next, &$response) {
                 try {
                     // resolve with result of next handler
-                    $resolve($next($request->withBody(new BufferedBody($buffer))));
+                    $resolve($next($response = $request->withBody(new BufferedBody($buffer))));
                 } catch (\Throwable $e) {
                     $reject($e);
                 }
@@ -94,12 +96,14 @@ final class RequestBodyBufferMiddleware
                     $e
                 ));
             });
-        }, function () use ($body, &$closer) {
+        }, function () use ($body, &$closer, &$response) {
             // cancelled buffering: remove close handler to avoid resolving, then close and reject
             assert($closer instanceof \Closure);
             $body->removeListener('close', $closer);
             $body->close();
-
+            if ($response instanceof PromiseInterface) {
+                $response->cancel();
+            }
             throw new \RuntimeException('Cancelled buffering request body');
         });
     }
